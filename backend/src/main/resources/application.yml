@@ -1,0 +1,73 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+
+spring:
+  application:
+    name: network-intelligence-api
+  
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=300s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# API Configuration
+api:
+  network:
+    # Timeout settings (milliseconds)
+    timeout:
+      ping: 3000
+      dns: 5000
+      http: 10000
+      tls: 5000
+    
+    # Rate limiting (requests per minute)
+    rate-limit:
+      enabled: true
+      capacity: 100
+      refill-tokens: 100
+      refill-period: 1m
+    
+    # Security settings
+    security:
+      block-internal-ips: true
+      blocked-hosts: localhost,127.0.0.1,0.0.0.0
+      blocked-ip-ranges:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+        - 169.254.0.0/16
+        - 224.0.0.0/4
+    
+    # Cache TTL (seconds)
+    cache:
+      dns-ttl: 300
+      tls-ttl: 3600
+
+# Logging
+logging:
+  level:
+    root: INFO
+    tech.wintrich: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# SpringDoc OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
