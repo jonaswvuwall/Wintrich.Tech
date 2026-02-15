@@ -43,10 +43,7 @@ api:
     # Security settings
     security:
       block-internal-ips: true
-      blocked-hosts:
-        - localhost
-        - 127.0.0.1
-        - 0.0.0.0
+      blocked-hosts: localhost,127.0.0.1,0.0.0.0
       blocked-ip-ranges:
         - 10.0.0.0/8
         - 172.16.0.0/12

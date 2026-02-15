@@ -3,7 +3,13 @@ package tech.wintrich.networkapi.application.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.xbill.DNS.*;
+import org.xbill.DNS.ARecord;
+import org.xbill.DNS.AAAARecord;
+import org.xbill.DNS.Lookup;
+import org.xbill.DNS.MXRecord;
+import org.xbill.DNS.NSRecord;
+import org.xbill.DNS.TXTRecord;
+import org.xbill.DNS.Type;
 import tech.wintrich.networkapi.presentation.dto.DnsResponse;
 
 import java.util.ArrayList;
@@ -74,9 +80,9 @@ public class DnsService {
             lookup.run();
             
             if (lookup.getResult() == Lookup.SUCCESSFUL) {
-                Record[] queryRecords = lookup.getAnswers();
+                org.xbill.DNS.Record[] queryRecords = lookup.getAnswers();
                 if (queryRecords != null) {
-                    for (Record record : queryRecords) {
+                    for (org.xbill.DNS.Record record : queryRecords) {
                         records.add(extractRecordData(record));
                     }
                 }
@@ -97,9 +103,9 @@ public class DnsService {
             lookup.run();
             
             if (lookup.getResult() == Lookup.SUCCESSFUL) {
-                Record[] records = lookup.getAnswers();
+                org.xbill.DNS.Record[] records = lookup.getAnswers();
                 if (records != null) {
-                    for (Record record : records) {
+                    for (org.xbill.DNS.Record record : records) {
                         if (record instanceof MXRecord) {
                             MXRecord mx = (MXRecord) record;
                             mxRecords.add(mx.getPriority() + " " + mx.getTarget());
@@ -122,7 +128,7 @@ public class DnsService {
             lookup.run();
             
             if (lookup.getResult() == Lookup.SUCCESSFUL) {
-                Record[] records = lookup.getAnswers();
+                org.xbill.DNS.Record[] records = lookup.getAnswers();
                 if (records != null && records.length > 0) {
                     return records[0].getTTL();
                 }
@@ -136,7 +142,7 @@ public class DnsService {
     /**
      * Extracts data from a DNS record
      */
-    private String extractRecordData(Record record) {
+    private String extractRecordData(org.xbill.DNS.Record record) {
         if (record instanceof ARecord) {
             return ((ARecord) record).getAddress().getHostAddress();
         } else if (record instanceof AAAARecord) {
