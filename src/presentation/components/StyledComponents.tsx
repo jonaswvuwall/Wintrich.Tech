@@ -2,13 +2,15 @@ import styled from 'styled-components';
 import { theme } from '../styles/theme';
 
 export const Card = styled.div`
-  background: ${theme.colors.surface};
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(10px);
   border: 1px solid ${theme.colors.border};
   border-radius: ${theme.borderRadius.lg};
-  padding: ${theme.spacing.xl};
+  padding: ${theme.spacing.xxl};
   transition: all ${theme.transitions.normal};
   position: relative;
   overflow: hidden;
+  width: 100%;
 
   &::before {
     content: '';
@@ -22,13 +24,33 @@ export const Card = styled.div`
     transition: transform ${theme.transitions.normal};
   }
 
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle,
+      rgba(0, 168, 232, 0.1) 0%,
+      transparent 50%
+    );
+    opacity: 0;
+    transition: opacity ${theme.transitions.normal};
+  }
+
   &:hover {
     border-color: ${theme.colors.primary};
-    box-shadow: ${theme.shadows.lg};
-    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 168, 232, 0.2);
+    transform: translateY(-4px) scale(1.005);
 
     &::before {
       transform: scaleX(1);
+    }
+
+    &::after {
+      opacity: 1;
     }
   }
 `;
@@ -41,15 +63,20 @@ export const CardHeader = styled.div`
 `;
 
 export const CardIcon = styled.div`
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: ${theme.borderRadius.md};
   background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryDark} 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  box-shadow: ${theme.shadows.glow};
+  font-size: 1.75rem;
+  box-shadow: 0 4px 20px rgba(0, 168, 232, 0.4);
+  transition: transform ${theme.transitions.normal};
+
+  ${Card}:hover & {
+    transform: 5rem;
+  font-weight: 7
 `;
 
 export const CardTitle = styled.h2`
@@ -61,7 +88,7 @@ export const CardTitle = styled.h2`
 
 export const CardDescription = styled.p`
   color: ${theme.colors.textSecondary};
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   margin: 0;
 `;
 
@@ -80,7 +107,7 @@ export const Label = styled.label`
 export const Input = styled.input`
   width: 100%;
   padding: ${theme.spacing.md};
-  background: ${theme.colors.background};
+  background: rgba(10, 10, 10, 0.8);
   border: 1px solid ${theme.colors.border};
   border-radius: ${theme.borderRadius.md};
   color: ${theme.colors.text};
@@ -90,7 +117,13 @@ export const Input = styled.input`
   &:focus {
     outline: none;
     border-color: ${theme.colors.primary};
-    box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.1);
+    box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.2);
+    background: rgba(10, 10, 10, 0.95);
+    transform: translateY(-1px);
+  }
+
+  &:hover:not(:focus) {
+    border-color: ${theme.colors.primaryDark};
   }
 
   &::placeholder {
@@ -110,14 +143,34 @@ export const Button = styled.button`
   cursor: pointer;
   transition: all ${theme.transitions.fast};
   box-shadow: ${theme.shadows.md};
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: ${theme.shadows.glow};
+    box-shadow: 0 8px 24px rgba(0, 168, 232, 0.4);
+    
+    &::before {
+      width: 300px;
+      height: 300px;
+    }
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.98);
   }
 
   &:disabled {
@@ -134,10 +187,27 @@ export const ResultContainer = styled.div<{ success?: boolean }>`
     : 'rgba(0, 168, 232, 0.05)'};
   border: 1px solid ${props => props.success === false 
     ? theme.colors.error 
-    : theme.colors.border};
+    : 'rgba(0, 168, 232, 0.3)'};
   border-radius: ${theme.borderRadius.md};
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
+  backdrop-filter: blur(10px);
+  animation: fadeInExpand 0.4s ease-out;
+
+  @keyframes fadeInExpand {
+    from {
+      opacity: 0;
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    to {
+      opacity: 1;
+      max-height: 500px;
+      padding-top: ${theme.spacing.lg};
+      padding-bottom: ${theme.spacing.lg};
+    }
+  }
 `;
 
 export const ResultItem = styled.div`
@@ -145,11 +215,37 @@ export const ResultItem = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: ${theme.spacing.sm} 0;
-  border-bottom: 1px solid ${theme.colors.border};
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all ${theme.transitions.fast};
+  animation: slideInLeft 0.3s ease-out backwards;
 
   &:last-child {
     border-bottom: none;
   }
+
+  &:hover {
+    padding-left: ${theme.spacing.sm};
+    background: rgba(0, 168, 232, 0.05);
+    border-radius: ${theme.borderRadius.sm};
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+rgba(0, 168, 232, 0.2)
+  /* Stagger delay for children */
+  ${Array.from({ length: 20 }, (_, i) => `
+    &:nth-child(${i + 1}) {
+      animation-delay: ${i * 0.05}s;
+    }
+  `).join('')}
 `;
 
 export const ResultLabel = styled.span`
@@ -211,4 +307,18 @@ export const Badge = styled.span<{ variant?: 'success' | 'warning' | 'error' | '
       default: return theme.colors.primary;
     }
   }};
+  transition: all ${theme.transitions.fast};
+  cursor: default;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px ${props => {
+      switch (props.variant) {
+        case 'success': return 'rgba(6, 214, 160, 0.3)';
+        case 'warning': return 'rgba(255, 214, 10, 0.3)';
+        case 'error': return 'rgba(239, 71, 111, 0.3)';
+        default: return 'rgba(0, 168, 232, 0.3)';
+      }
+    }};
+  }
 `;

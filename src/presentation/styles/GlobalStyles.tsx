@@ -8,6 +8,10 @@ export const GlobalStyles = createGlobalStyle`
     box-sizing: border-box;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
       'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
@@ -33,16 +37,21 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   ::-webkit-scrollbar-thumb {
-    background: ${theme.colors.primary};
+    background: linear-gradient(180deg, ${theme.colors.primary} 0%, ${theme.colors.primaryDark} 100%);
     border-radius: ${theme.borderRadius.sm};
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: ${theme.colors.primaryDark};
+    background: linear-gradient(180deg, ${theme.colors.primaryLight} 0%, ${theme.colors.primary} 100%);
   }
 
   ::selection {
     background: ${theme.colors.primary};
     color: ${theme.colors.text};
+  }
+
+  /* Smooth transitions for all interactive elements */
+  a, button, input, textarea, select {
+    transition: all ${theme.transitions.fast};
   }
 `;
