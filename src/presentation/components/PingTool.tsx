@@ -35,9 +35,11 @@ export const PingTool: React.FC = () => {
       setResult(data);
     } catch (error) {
       setResult({
-        target: target.trim(),
+        host: target.trim(),
+        ip: null,
         reachable: false,
-        latency: null,
+        latencyMs: null,
+        timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
@@ -83,13 +85,19 @@ export const PingTool: React.FC = () => {
                 </Badge>
               </ResultItem>
               <ResultItem>
-                <ResultLabel>Target</ResultLabel>
-                <ResultValue highlight>{result.target}</ResultValue>
+                <ResultLabel>Host</ResultLabel>
+                <ResultValue highlight>{result.host}</ResultValue>
               </ResultItem>
-              {result.latency !== null && (
+              {result.ip && (
+                <ResultItem>
+                  <ResultLabel>IP Address</ResultLabel>
+                  <ResultValue highlight>{result.ip}</ResultValue>
+                </ResultItem>
+              )}
+              {result.latencyMs !== null && (
                 <ResultItem>
                   <ResultLabel>Latency</ResultLabel>
-                  <ResultValue highlight>{result.latency} ms</ResultValue>
+                  <ResultValue highlight>{result.latencyMs} ms</ResultValue>
                 </ResultItem>
               )}
             </>
