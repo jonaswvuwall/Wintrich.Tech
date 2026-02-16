@@ -22,6 +22,7 @@ export const Card = styled.div`
     background: linear-gradient(90deg, ${theme.colors.primary} 0%, ${theme.colors.primaryLight} 100%);
     transform: scaleX(0);
     transition: transform ${theme.transitions.normal};
+    pointer-events: none;
   }
 
   &::after {
@@ -38,6 +39,7 @@ export const Card = styled.div`
     );
     opacity: 0;
     transition: opacity ${theme.transitions.normal};
+    pointer-events: none;
   }
 
   &:hover {
