@@ -1,6 +1,5 @@
 # Maven
 target/
-!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -30,14 +29,15 @@ logs/
 # Spring Boot
 spring.log
 
-# Package Files
-*.jar
+# Package Files (but keep Maven wrapper)
 *.war
 *.nar
 *.ear
 *.zip
 *.tar.gz
 *.rar
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
 
 # JVM crash logs
 hs_err_pid*
