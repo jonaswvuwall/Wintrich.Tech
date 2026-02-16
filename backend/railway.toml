@@ -1,8 +1,11 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "chmod +x mvnw && ./mvnw clean package -DskipTests"
 
 [deploy]
 startCommand = "java -Dserver.port=$PORT -jar target/network-intelligence-api-1.0.0.jar"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+
+[nixpacks]
+cmds.setup = "apt-get update && apt-get install -y maven openjdk-17-jdk"
+cmds.build = "mvn clean package -DskipTests"
