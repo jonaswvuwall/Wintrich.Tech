@@ -45,6 +45,7 @@ export const AnimatedBackground = styled.div`
   background-size: 400% 400%;
   animation: ${gradientShift} 15s ease infinite;
   overflow: hidden;
+  pointer-events: none;
 `;
 
 export const FloatingShape = styled.div<{ delay?: number; duration?: number; size?: number }>`
@@ -61,6 +62,7 @@ export const FloatingShape = styled.div<{ delay?: number; duration?: number; siz
   opacity: 0.4;
   width: ${props => props.size || 300}px;
   height: ${props => props.size || 300}px;
+  pointer-events: none;
 
   &:nth-child(1) {
     top: 10%;
@@ -88,6 +90,7 @@ export const ParticleContainer = styled.div`
   width: 100%;
   height: 100%;
   overflow: hidden;
+  pointer-events: none;
 `;
 
 const moveUp = keyframes`
@@ -118,6 +121,7 @@ export const Particle = styled.div<{ delay?: number; duration?: number; left?: s
   animation: ${moveUp} ${props => props.duration || 15}s linear infinite;
   animation-delay: ${props => props.delay || 0}s;
   box-shadow: 0 0 10px ${theme.colors.primary};
+  pointer-events: none;
 `;
 
 export const GridOverlay = styled.div`
@@ -131,6 +135,7 @@ export const GridOverlay = styled.div`
     linear-gradient(90deg, rgba(0, 168, 232, 0.03) 1px, transparent 1px);
   background-size: 50px 50px;
   animation: ${pulse} 4s ease-in-out infinite;
+  pointer-events: none;
 `;
 
 export const BackgroundGlow = styled.div`
@@ -147,4 +152,5 @@ export const BackgroundGlow = styled.div`
   );
   filter: blur(60px);
   animation: ${pulse} 8s ease-in-out infinite;
+  pointer-events: none;
 `;
