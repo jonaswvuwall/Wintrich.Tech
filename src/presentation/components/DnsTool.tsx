@@ -17,11 +17,30 @@ import {
   LoadingSpinner,
   ErrorMessage,
 } from './StyledComponents';
+import { InfoTooltip } from './common/InfoTooltip';
+import { ResultInterpretation } from './common/ResultInterpretation';
+import { ErrorBoundary } from './common/ErrorBoundary';
+import {
+  interpretTTL,
+  interpretDnsRecordType,
+  interpretDnsResult,
+  type Interpretation,
+} from '../../shared/utils/interpretations';
 
-export const DnsTool: React.FC = () => {
+const DnsToolContent: React.FC = () => {
   const [domain, setDomain] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DnsResponse | null>(null);
+
+  const SafeInfoTooltip: React.FC<{ interpret: () => Interpretation }> = ({ interpret }) => {
+    try {
+      const interpretation = interpret();
+      return <InfoTooltip interpretation={interpretation} />;
+    } catch (error) {
+      console.error('Error in interpretation:', error);
+      return null;
+    }
+  };
 
   const handleLookup = async () => {
     if (!domain.trim()) return;
@@ -48,12 +67,15 @@ export const DnsTool: React.FC = () => {
     }
   };
 
-  const renderRecords = (label: string, records: string[] | undefined) => {
+  const renderRecords = (label: string, recordType: string, records: string[] | undefined) => {
     if (!records || records.length === 0) return null;
     return (
       <>
         <ResultItem>
-          <ResultLabel>{label}</ResultLabel>
+          <ResultLabel>
+            {label}
+            <SafeInfoTooltip interpret={() => interpretDnsRecordType(recordType)} />
+          </ResultLabel>
           <ResultValue>{records.length} record(s)</ResultValue>
         </ResultItem>
         {records.map((record, index) => (
@@ -94,7 +116,17 @@ export const DnsTool: React.FC = () => {
       {result && (
         <ResultContainer success={!result.error}>
           {result.error ? (
-            <ErrorMessage>{result.error}</ErrorMessage>
+            <>
+              <ErrorMessage>{result.error}</ErrorMessage>
+              {(() => {
+                try {
+                  return <ResultInterpretation {...interpretDnsResult(result)} />;
+                } catch (error) {
+                  console.error('Error interpreting DNS result:', error);
+                  return null;
+                }
+              })()}
+            </>
           ) : (
             <>
               <ResultItem>
@@ -103,19 +135,38 @@ export const DnsTool: React.FC = () => {
               </ResultItem>
               {result.ttl !== null && (
                 <ResultItem>
-                  <ResultLabel>TTL</ResultLabel>
+                  <ResultLabel>
+                    TTL (Time To Live)
+                    <SafeInfoTooltip interpret={() => interpretTTL(result.ttl ?? 0)} />
+                  </ResultLabel>
                   <ResultValue>{result.ttl}s</ResultValue>
                 </ResultItem>
               )}
-              {renderRecords('A Records (IPv4)', result.aRecords)}
-              {renderRecords('AAAA Records (IPv6)', result.aaaaRecords)}
-              {renderRecords('MX Records', result.mxRecords)}
-              {renderRecords('NS Records', result.nsRecords)}
-              {renderRecords('TXT Records', result.txtRecords)}
+              {renderRecords('A Records (IPv4)', 'A', result.aRecords)}
+              {renderRecords('AAAA Records (IPv6)', 'AAAA', result.aaaaRecords)}
+              {renderRecords('MX Records', 'MX', result.mxRecords)}
+              {renderRecords('NS Records', 'NS', result.nsRecords)}
+              {renderRecords('TXT Records', 'TXT', result.txtRecords)}
+              {(() => {
+                try {
+                  return <ResultInterpretation {...interpretDnsResult(result)} />;
+                } catch (error) {
+                  console.error('Error interpreting DNS result:', error);
+                  return null;
+                }
+              })()}
             </>
           )}
         </ResultContainer>
       )}
     </Card>
+  );
+};
+
+export const DnsTool: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <DnsToolContent />
+    </ErrorBoundary>
   );
 };

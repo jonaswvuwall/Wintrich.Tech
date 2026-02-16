@@ -18,12 +18,33 @@ import {
   ErrorMessage,
   Badge,
 } from './StyledComponents';
+import { InfoTooltip } from './common/InfoTooltip';
+import { ResultInterpretation } from './common/ResultInterpretation';
+import { ErrorBoundary } from './common/ErrorBoundary';
+import {
+  interpretCertificateExpiry,
+  interpretSignatureAlgorithm,
+  interpretTlsVersion,
+  interpretSAN,
+  interpretTlsResult,
+  type Interpretation,
+} from '../../shared/utils/interpretations';
 
-export const TlsTool: React.FC = () => {
+const TlsToolContent: React.FC = () => {
   const [host, setHost] = useState('');
   const [port, setPort] = useState('443');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TlsInfoResponse | null>(null);
+
+  const SafeInfoTooltip: React.FC<{ interpret: () => Interpretation }> = ({ interpret }) => {
+    try {
+      const interpretation = interpret();
+      return <InfoTooltip interpretation={interpretation} />;
+    } catch (error) {
+      console.error('Error in interpretation:', error);
+      return null;
+    }
+  };
 
   const handleInspect = async () => {
     if (!host.trim()) return;
@@ -102,7 +123,10 @@ export const TlsTool: React.FC = () => {
           ) : (
             <>
               <ResultItem>
-                <ResultLabel>Days Until Expiry</ResultLabel>
+                <ResultLabel>
+                  Days Until Expiry
+                  <SafeInfoTooltip interpret={() => interpretCertificateExpiry(result.daysUntilExpiry)} />
+                </ResultLabel>
                 <Badge variant={getExpiryVariant(result.daysUntilExpiry)}>
                   {result.daysUntilExpiry} days
                 </Badge>
@@ -124,11 +148,17 @@ export const TlsTool: React.FC = () => {
                 <ResultValue>{new Date(result.validTo).toLocaleDateString()}</ResultValue>
               </ResultItem>
               <ResultItem>
-                <ResultLabel>Version</ResultLabel>
+                <ResultLabel>
+                  Certificate Version
+                  <SafeInfoTooltip interpret={() => interpretTlsVersion(result.version)} />
+                </ResultLabel>
                 <ResultValue>v{result.version}</ResultValue>
               </ResultItem>
               <ResultItem>
-                <ResultLabel>Algorithm</ResultLabel>
+                <ResultLabel>
+                  Signature Algorithm
+                  <SafeInfoTooltip interpret={() => interpretSignatureAlgorithm(result.signatureAlgorithm)} />
+                </ResultLabel>
                 <ResultValue>{result.signatureAlgorithm}</ResultValue>
               </ResultItem>
               <ResultItem>
@@ -138,7 +168,10 @@ export const TlsTool: React.FC = () => {
               {result.subjectAlternativeNames.length > 0 && (
                 <>
                   <ResultItem>
-                    <ResultLabel>SANs</ResultLabel>
+                    <ResultLabel>
+                      SANs (Subject Alternative Names)
+                      <SafeInfoTooltip interpret={() => interpretSAN(result.subjectAlternativeNames.length)} />
+                    </ResultLabel>
                     <ResultValue>{result.subjectAlternativeNames.length} total</ResultValue>
                   </ResultItem>
                   {result.subjectAlternativeNames.slice(0, 3).map((san, index) => (
@@ -149,10 +182,26 @@ export const TlsTool: React.FC = () => {
                   ))}
                 </>
               )}
+              {(() => {
+                try {
+                  return <ResultInterpretation {...interpretTlsResult(result)} />;
+                } catch (error) {
+                  console.error('Error interpreting TLS result:', error);
+                  return null;
+                }
+              })()}
             </>
           )}
         </ResultContainer>
       )}
     </Card>
+  );
+};
+
+export const TlsTool: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <TlsToolContent />
+    </ErrorBoundary>
   );
 };

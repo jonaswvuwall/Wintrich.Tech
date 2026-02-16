@@ -9,7 +9,7 @@ export const Card = styled.div`
   padding: ${theme.spacing.xxl};
   transition: all ${theme.transitions.normal};
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   width: 100%;
 
   &::before {
@@ -191,10 +191,12 @@ export const ResultContainer = styled.div<{ success?: boolean }>`
     ? theme.colors.error 
     : 'rgba(0, 168, 232, 0.3)'};
   border-radius: ${theme.borderRadius.md};
-  max-height: 500px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
   backdrop-filter: blur(10px);
   animation: fadeInExpand 0.4s ease-out;
+  position: relative;
+  z-index: 1;
 
   @keyframes fadeInExpand {
     from {
@@ -220,6 +222,8 @@ export const ResultItem = styled.div`
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   transition: all ${theme.transitions.fast};
   animation: slideInLeft 0.3s ease-out backwards;
+  position: relative;
+  overflow: visible;
 
   &:last-child {
     border-bottom: none;
@@ -251,6 +255,8 @@ rgba(0, 168, 232, 0.2)
 `;
 
 export const ResultLabel = styled.span`
+  display: flex;
+  align-items: center;
   color: ${theme.colors.textSecondary};
   font-size: 0.875rem;
   font-weight: 500;
