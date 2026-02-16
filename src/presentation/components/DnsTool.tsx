@@ -48,8 +48,8 @@ export const DnsTool: React.FC = () => {
     }
   };
 
-  const renderRecords = (label: string, records: string[]) => {
-    if (records.length === 0) return null;
+  const renderRecords = (label: string, records: string[] | undefined) => {
+    if (!records || records.length === 0) return null;
     return (
       <>
         <ResultItem>
