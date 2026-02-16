@@ -1,9 +1,11 @@
 const API_BASE_URL = 'http://localhost:8080/api/network';
 
 export interface PingResponse {
-  target: string;
+  host: string;
+  ip: string | null;
   reachable: boolean;
-  latency: number | null;
+  latencyMs: number | null;
+  timestamp: string;
   error: string | null;
 }
 
@@ -45,8 +47,8 @@ export interface TlsInfoResponse {
 }
 
 class NetworkApiService {
-  async ping(target: string): Promise<PingResponse> {
-    const response = await fetch(`${API_BASE_URL}/ping?target=${encodeURIComponent(target)}`);
+  async ping(host: string): Promise<PingResponse> {
+    const response = await fetch(`${API_BASE_URL}/ping?host=${encodeURIComponent(host)}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   }
