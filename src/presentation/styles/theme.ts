@@ -12,7 +12,9 @@ export const theme = {
     success: '#06D6A0',      // Green
     warning: '#FFD60A',      // Yellow
     error: '#EF476F',        // Red
+    info: '#00A8E8',         // Blue (info)
     border: '#333333',       // Dark border
+    cardBackground: '#1A1A1A', // Card background
   },
   spacing: {
     xs: '0.25rem',
