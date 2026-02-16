@@ -1,11 +1,9 @@
 services:
   - type: web
     name: wintrich-tech-api
-    runtime: java
-    env: java
-    buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/network-intelligence-api-1.0.0.jar
+    runtime: docker
     rootDir: backend
+    dockerfilePath: ./Dockerfile
     envVars:
-      - key: JAVA_VERSION
-        value: 17
+      - key: PORT
+        value: 8080
