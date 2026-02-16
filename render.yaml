@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: wintrich-tech-api
+    runtime: java
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/network-intelligence-api-1.0.0.jar
+    rootDir: backend
+    envVars:
+      - key: JAVA_VERSION
+        value: 17
