@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { networkApi, type HttpAnalysisResponse } from '../../infrastructure/api/networkApi';
 import {
   Card,
@@ -21,6 +22,10 @@ import {
 import { InfoTooltip } from './common/InfoTooltip';
 import { ResultInterpretation } from './common/ResultInterpretation';
 import { ErrorBoundary } from './common/ErrorBoundary';
+import { RecentChips } from './common/RecentChips';
+import { ResultActions } from './common/ResultActions';
+import { HttpIcon } from './common/ToolIcons';
+import { useToolHistory } from '../hooks/useToolHistory';
 import {
   interpretStatusCode,
   interpretResponseTime,
@@ -30,10 +35,15 @@ import {
   type Interpretation,
 } from '../../shared/utils/interpretations';
 
+const TOOL_KEY = 'http';
+
 const HttpToolContent: React.FC = () => {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HttpAnalysisResponse | null>(null);
+  const { entries, add, clear } = useToolHistory(TOOL_KEY);
+  const [searchParams] = useSearchParams();
+  const autoRanRef = useRef(false);
 
   const SafeInfoTooltip: React.FC<{ interpret: () => Interpretation }> = ({ interpret }) => {
     try {
@@ -45,18 +55,21 @@ const HttpToolContent: React.FC = () => {
     }
   };
 
-  const handleAnalyze = async () => {
-    if (!url.trim()) return;
+  const runAnalyze = async (target: string) => {
+    const trimmed = target.trim();
+    if (!trimmed) return;
 
+    setUrl(trimmed);
     setLoading(true);
     setResult(null);
+    add(trimmed);
 
     try {
-      const data = await networkApi.httpAnalysis(url.trim());
+      const data = await networkApi.httpAnalysis(trimmed);
       setResult(data);
     } catch (error) {
       setResult({
-        url: url.trim(),
+        url: trimmed,
         statusCode: 0,
         responseTime: 0,
         contentLength: 0,
@@ -70,6 +83,16 @@ const HttpToolContent: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (autoRanRef.current) return;
+    if (searchParams.get('tool') !== TOOL_KEY) return;
+    const q = searchParams.get('q');
+    if (!q) return;
+    autoRanRef.current = true;
+    runAnalyze(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const getStatusVariant = (code: number): 'success' | 'warning' | 'error' | 'info' => {
     if (code >= 200 && code < 300) return 'success';
     if (code >= 300 && code < 400) return 'info';
@@ -80,7 +103,7 @@ const HttpToolContent: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardIcon>🔍</CardIcon>
+        <CardIcon><HttpIcon /></CardIcon>
         <div>
           <CardTitle>HTTP Analysis</CardTitle>
           <CardDescription>Analyze HTTP responses and headers</CardDescription>
@@ -94,11 +117,13 @@ const HttpToolContent: React.FC = () => {
           placeholder="https://example.com"
           value={url}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUrl(e.target.value)}
-          onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleAnalyze()}
+          onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && runAnalyze(url)}
         />
       </InputGroup>
 
-      <Button onClick={handleAnalyze} disabled={loading || !url.trim()}>
+      <RecentChips entries={entries} onPick={(e) => runAnalyze(e.value)} onClear={clear} />
+
+      <Button onClick={() => runAnalyze(url)} disabled={loading || !url.trim()}>
         {loading ? <LoadingSpinner /> : 'Analyze HTTP'}
       </Button>
 
@@ -173,6 +198,12 @@ const HttpToolContent: React.FC = () => {
               })()}
             </>
           )}
+          <ResultActions
+            toolKey={TOOL_KEY}
+            identifier={result.url}
+            data={result as unknown as Record<string, unknown>}
+            shareValue={result.url}
+          />
         </ResultContainer>
       )}
     </Card>

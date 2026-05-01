@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { networkApi, type DnsResponse } from '../../infrastructure/api/networkApi';
 import {
   Card,
@@ -20,6 +21,10 @@ import {
 import { InfoTooltip } from './common/InfoTooltip';
 import { ResultInterpretation } from './common/ResultInterpretation';
 import { ErrorBoundary } from './common/ErrorBoundary';
+import { RecentChips } from './common/RecentChips';
+import { ResultActions } from './common/ResultActions';
+import { DnsIcon } from './common/ToolIcons';
+import { useToolHistory } from '../hooks/useToolHistory';
 import {
   interpretTTL,
   interpretDnsRecordType,
@@ -27,10 +32,15 @@ import {
   type Interpretation,
 } from '../../shared/utils/interpretations';
 
+const TOOL_KEY = 'dns';
+
 const DnsToolContent: React.FC = () => {
   const [domain, setDomain] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DnsResponse | null>(null);
+  const { entries, add, clear } = useToolHistory(TOOL_KEY);
+  const [searchParams] = useSearchParams();
+  const autoRanRef = useRef(false);
 
   const SafeInfoTooltip: React.FC<{ interpret: () => Interpretation }> = ({ interpret }) => {
     try {
@@ -42,18 +52,21 @@ const DnsToolContent: React.FC = () => {
     }
   };
 
-  const handleLookup = async () => {
-    if (!domain.trim()) return;
+  const runLookup = async (d: string) => {
+    const trimmed = d.trim();
+    if (!trimmed) return;
 
+    setDomain(trimmed);
     setLoading(true);
     setResult(null);
+    add(trimmed);
 
     try {
-      const data = await networkApi.dnsLookup(domain.trim());
+      const data = await networkApi.dnsLookup(trimmed);
       setResult(data);
     } catch (error) {
       setResult({
-        domain: domain.trim(),
+        domain: trimmed,
         aRecords: [],
         aaaaRecords: [],
         mxRecords: [],
@@ -66,6 +79,16 @@ const DnsToolContent: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (autoRanRef.current) return;
+    if (searchParams.get('tool') !== TOOL_KEY) return;
+    const q = searchParams.get('q');
+    if (!q) return;
+    autoRanRef.current = true;
+    runLookup(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const renderRecords = (label: string, recordType: string, records: string[] | undefined) => {
     if (!records || records.length === 0) return null;
@@ -91,7 +114,7 @@ const DnsToolContent: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardIcon>🌐</CardIcon>
+        <CardIcon><DnsIcon /></CardIcon>
         <div>
           <CardTitle>DNS Lookup</CardTitle>
           <CardDescription>Query DNS records for any domain</CardDescription>
@@ -105,11 +128,13 @@ const DnsToolContent: React.FC = () => {
           placeholder="example.com"
           value={domain}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDomain(e.target.value)}
-          onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleLookup()}
+          onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && runLookup(domain)}
         />
       </InputGroup>
 
-      <Button onClick={handleLookup} disabled={loading || !domain.trim()}>
+      <RecentChips entries={entries} onPick={(e) => runLookup(e.value)} onClear={clear} />
+
+      <Button onClick={() => runLookup(domain)} disabled={loading || !domain.trim()}>
         {loading ? <LoadingSpinner /> : 'Query DNS Records'}
       </Button>
 
@@ -157,6 +182,12 @@ const DnsToolContent: React.FC = () => {
               })()}
             </>
           )}
+          <ResultActions
+            toolKey={TOOL_KEY}
+            identifier={result.domain}
+            data={result as unknown as Record<string, unknown>}
+            shareValue={result.domain}
+          />
         </ResultContainer>
       )}
     </Card>

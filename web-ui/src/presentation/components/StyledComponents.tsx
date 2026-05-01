@@ -53,13 +53,20 @@ export const CardIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
   color: ${theme.colors.primary};
   flex-shrink: 0;
-  transition: transform ${theme.transitions.normal};
+  transition: border-color ${theme.transitions.normal}, box-shadow ${theme.transitions.normal}, color ${theme.transitions.normal};
+
+  svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.8;
+  }
 
   ${Card}:hover & {
-    transform: scale(1.06) rotate(-4deg);
+    border-color: rgba(34, 211, 238, 0.55);
+    box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.08), 0 8px 24px rgba(34, 211, 238, 0.18);
+    color: ${theme.colors.text};
   }
 `;
 

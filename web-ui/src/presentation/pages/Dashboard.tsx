@@ -4,6 +4,8 @@ import { PingTool } from '../components/PingTool';
 import { DnsTool } from '../components/DnsTool';
 import { HttpTool } from '../components/HttpTool';
 import { TlsTool } from '../components/TlsTool';
+import { SecurityTool } from '../components/SecurityTool';
+import { FullDiagnosticTool } from '../components/FullDiagnosticTool';
 import { ScrollToTop } from '../components/ScrollToTop';
 import { theme } from '../styles/theme';
 
@@ -11,6 +13,79 @@ const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 `;
+
+/* ---------- Ambient backdrop animation (echoes the Home hero) ---------- */
+
+const slowSpin = keyframes`
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+`;
+
+const slowSpinReverse = keyframes`
+  to { transform: translate(-50%, -50%) rotate(-360deg); }
+`;
+
+const Backdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+`;
+
+/*
+  A large orbital system pinned to the upper-right edge, partially clipped
+  off-screen — a subtle echo of the Home hero's logo orbits, providing
+  identity continuity without competing with the dashboard content.
+*/
+const OrbitStage = styled.div`
+  position: absolute;
+  top: -20%;
+  right: -25%;
+  width: clamp(700px, 70vw, 1100px);
+  aspect-ratio: 1;
+  opacity: 0.55;
+
+  @media (max-width: 980px) {
+    top: -10%;
+    right: -45%;
+    opacity: 0.4;
+  }
+`;
+
+const Halo = styled.div`
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(34, 211, 238, 0.28), transparent 60%),
+    radial-gradient(circle at 70% 70%, rgba(167, 139, 250, 0.24), transparent 60%);
+  filter: blur(50px);
+`;
+
+const Ring = styled.div<{ $size: string; $duration: number; $reverse?: boolean }>`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: ${p => p.$size};
+  height: ${p => p.$size};
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.10);
+  transform: translate(-50%, -50%);
+  animation: ${p => p.$reverse ? slowSpinReverse : slowSpin} ${p => p.$duration}s linear infinite;
+`;
+
+const OrbitDot = styled.div<{ $color: string }>`
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${p => p.$color};
+  box-shadow: 0 0 16px ${p => p.$color};
+`;
+
+/* ---------- Page layout ---------- */
 
 const Page = styled.div`
   position: relative;
@@ -20,6 +95,8 @@ const Page = styled.div`
 `;
 
 const Header = styled.header`
+  position: relative;
+  z-index: 1;
   width: min(1320px, 100%);
   margin: 0 auto 2.5rem;
   display: flex;
@@ -104,6 +181,8 @@ const MetaPill = styled.div<{ $color?: string }>`
 `;
 
 const Grid = styled.div`
+  position: relative;
+  z-index: 1;
   width: min(1320px, 100%);
   margin: 0 auto;
   display: grid;
@@ -114,12 +193,16 @@ const Grid = styled.div`
     animation: ${fadeUp} 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
   > *:nth-child(1) { animation-delay: 0.05s; }
-  > *:nth-child(2) { animation-delay: 0.12s; }
-  > *:nth-child(3) { animation-delay: 0.19s; }
-  > *:nth-child(4) { animation-delay: 0.26s; }
+  > *:nth-child(2) { animation-delay: 0.10s; }
+  > *:nth-child(3) { animation-delay: 0.15s; }
+  > *:nth-child(4) { animation-delay: 0.20s; }
+  > *:nth-child(5) { animation-delay: 0.25s; }
+  > *:nth-child(6) { animation-delay: 0.30s; }
 `;
 
 const Footer = styled.footer`
+  position: relative;
+  z-index: 1;
   width: min(1320px, 100%);
   margin: 4rem auto 0;
   padding-top: 2rem;
@@ -135,35 +218,53 @@ const Footer = styled.footer`
 export const Dashboard: React.FC = () => {
   return (
     <Page>
+      <Backdrop>
+        <OrbitStage>
+          <Halo />
+          <Ring $size="98%" $duration={60}>
+            <OrbitDot $color="#22D3EE" />
+          </Ring>
+          <Ring $size="78%" $duration={42} $reverse>
+            <OrbitDot $color="#A78BFA" />
+          </Ring>
+          <Ring $size="58%" $duration={28}>
+            <OrbitDot $color="#7C9CFF" />
+          </Ring>
+        </OrbitStage>
+      </Backdrop>
+
       <Header>
         <div>
-          <Eyebrow>Diagnostics console</Eyebrow>
+          <Eyebrow>Diagnostic tools</Eyebrow>
           <Title>
-            Network <span className="grad">Intelligence</span>
+            Network <span className="grad">Tools</span>
           </Title>
           <Sub>
-            A unified surface for ping, DNS, HTTP and TLS — designed for fast, precise inspection.
+            Run connectivity checks, DNS lookups, HTTP analysis, and certificate inspections — all in one place.
           </Sub>
         </div>
         <TopMeta>
           <MetaPill>API <b>online</b></MetaPill>
-          <MetaPill $color={theme.colors.primary}><b>4</b> tools active</MetaPill>
+          <MetaPill $color={theme.colors.primary}><b>6</b> tools active</MetaPill>
         </TopMeta>
       </Header>
 
       <Grid>
+        <FullDiagnosticTool />
         <PingTool />
         <DnsTool />
         <HttpTool />
         <TlsTool />
+        <SecurityTool />
       </Grid>
 
       <Footer>
         <span>© 2026 Wintrich.Tech — Network Intelligence</span>
-        <span>React · TypeScript · ASP.NET Core</span>
+        <span>Built by Wintrich.Tech</span>
       </Footer>
 
       <ScrollToTop />
     </Page>
   );
 };
+

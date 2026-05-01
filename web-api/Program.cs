@@ -71,6 +71,7 @@ builder.Services.AddScoped<ConnectivityService>();
 builder.Services.AddScoped<DnsService>();
 builder.Services.AddScoped<HttpAnalysisService>();
 builder.Services.AddScoped<TlsService>();
+builder.Services.AddScoped<SecurityHeadersService>();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Port binding — reads PORT env var (Render/Railway) or defaults to 8080

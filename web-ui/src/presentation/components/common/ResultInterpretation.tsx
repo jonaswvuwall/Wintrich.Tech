@@ -163,8 +163,7 @@ export const ResultInterpretation: React.FC<ResultInterpretationProps> = ({
   return (
     <Container>
       <InterpretButton onClick={() => setShow(!show)}>
-        <span>🎯</span>
-        <span>{show ? 'Hide Interpretation' : 'Interpret This Result'}</span>
+        <span>{show ? 'Hide explanation' : 'What does this mean?'}</span>
       </InterpretButton>
       
       <InterpretationPanel severity={safeSeverity} show={show}>

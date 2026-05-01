@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { networkApi, type PingResponse } from '../../infrastructure/api/networkApi';
 import {
   Card,
@@ -21,6 +22,10 @@ import {
 import { InfoTooltip } from './common/InfoTooltip';
 import { ResultInterpretation } from './common/ResultInterpretation';
 import { ErrorBoundary } from './common/ErrorBoundary';
+import { RecentChips } from './common/RecentChips';
+import { ResultActions } from './common/ResultActions';
+import { PingIcon } from './common/ToolIcons';
+import { useToolHistory } from '../hooks/useToolHistory';
 import {
   interpretLatency,
   interpretReachability,
@@ -29,10 +34,15 @@ import {
   type Interpretation,
 } from '../../shared/utils/interpretations';
 
+const TOOL_KEY = 'ping';
+
 const PingToolContent: React.FC = () => {
   const [target, setTarget] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PingResponse | null>(null);
+  const { entries, add, clear } = useToolHistory(TOOL_KEY);
+  const [searchParams] = useSearchParams();
+  const autoRanRef = useRef(false);
 
   const SafeInfoTooltip: React.FC<{ interpret: () => Interpretation }> = ({ interpret }) => {
     try {
@@ -44,18 +54,21 @@ const PingToolContent: React.FC = () => {
     }
   };
 
-  const handlePing = async () => {
-    if (!target.trim()) return;
+  const runPing = async (host: string) => {
+    const trimmed = host.trim();
+    if (!trimmed) return;
 
+    setTarget(trimmed);
     setLoading(true);
     setResult(null);
+    add(trimmed);
 
     try {
-      const data = await networkApi.ping(target.trim());
+      const data = await networkApi.ping(trimmed);
       setResult(data);
     } catch (error) {
       setResult({
-        host: target.trim(),
+        host: trimmed,
         ip: null,
         reachable: false,
         latencyMs: null,
@@ -67,10 +80,21 @@ const PingToolContent: React.FC = () => {
     }
   };
 
+  // Auto-run from shareable URL (?tool=ping&q=...) — once per mount.
+  useEffect(() => {
+    if (autoRanRef.current) return;
+    if (searchParams.get('tool') !== TOOL_KEY) return;
+    const q = searchParams.get('q');
+    if (!q) return;
+    autoRanRef.current = true;
+    runPing(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   return (
     <Card>
       <CardHeader>
-        <CardIcon>📡</CardIcon>
+        <CardIcon><PingIcon /></CardIcon>
         <div>
           <CardTitle>Ping Test</CardTitle>
           <CardDescription>Check connectivity and measure latency</CardDescription>
@@ -84,11 +108,13 @@ const PingToolContent: React.FC = () => {
           placeholder="example.com or 8.8.8.8"
           value={target}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTarget(e.target.value)}
-          onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handlePing()}
+          onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && runPing(target)}
         />
       </InputGroup>
 
-      <Button onClick={handlePing} disabled={loading || !target.trim()}>
+      <RecentChips entries={entries} onPick={(e) => runPing(e.value)} onClear={clear} />
+
+      <Button onClick={() => runPing(target)} disabled={loading || !target.trim()}>
         {loading ? <LoadingSpinner /> : 'Run Ping Test'}
       </Button>
 
@@ -149,6 +175,12 @@ const PingToolContent: React.FC = () => {
               })()}
             </>
           )}
+          <ResultActions
+            toolKey={TOOL_KEY}
+            identifier={result.host}
+            data={result as unknown as Record<string, unknown>}
+            shareValue={result.host}
+          />
         </ResultContainer>
       )}
     </Card>

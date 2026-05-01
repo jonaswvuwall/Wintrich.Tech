@@ -274,10 +274,11 @@ export const About: React.FC = () => {
           <Section $delay={0.2}>
             <SectionTitle>About this project</SectionTitle>
             <p style={{ color: theme.colors.textSecondary, lineHeight: 1.7 }}>
-              Wintrich.Tech is a network diagnostics platform — an ASP.NET Core backend with
-              SSRF-hardened endpoints, rate limiting and caching, paired with a styled-components
-              React frontend. Use the dashboard to test connectivity, resolve DNS, inspect HTTP
-              responses, and audit TLS certificates.
+              Wintrich.Tech is a free network diagnostics platform with six tools in one
+              dashboard: a one-click full diagnostic, connectivity check, DNS lookup, HTTP
+              analysis, TLS certificate inspector, and security-headers audit with an A+ to F
+              grade. Every result can be exported as JSON or CSV and shared via deep link —
+              no setup required.
             </p>
             <ProjectCta to="/dashboard">Try the dashboard →</ProjectCta>
           </Section>

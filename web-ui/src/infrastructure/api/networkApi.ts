@@ -46,6 +46,28 @@ export interface TlsInfoResponse {
   error: string | null;
 }
 
+export interface SecurityHeaderCheck {
+  name: string;
+  present: boolean;
+  value: string | null;
+  score: number;
+  maxScore: number;
+  description: string;
+  status: 'good' | 'warning' | 'missing';
+}
+
+export interface SecurityHeadersResponse {
+  url: string;
+  statusCode: number | null;
+  usesHttps: boolean;
+  score: number;
+  maxScore: number;
+  grade: string;
+  summary: string;
+  checks: SecurityHeaderCheck[];
+  error: string | null;
+}
+
 class NetworkApiService {
   async ping(host: string): Promise<PingResponse> {
     const response = await fetch(`${API_BASE_URL}/ping?host=${encodeURIComponent(host)}`);
@@ -67,6 +89,12 @@ class NetworkApiService {
 
   async tlsInfo(host: string, port: number = 443): Promise<TlsInfoResponse> {
     const response = await fetch(`${API_BASE_URL}/tls-info?host=${encodeURIComponent(host)}&port=${port}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  }
+
+  async securityHeaders(url: string): Promise<SecurityHeadersResponse> {
+    const response = await fetch(`${API_BASE_URL}/security-headers?url=${encodeURIComponent(url)}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   }

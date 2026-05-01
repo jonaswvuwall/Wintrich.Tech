@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { networkApi, type TlsInfoResponse } from '../../infrastructure/api/networkApi';
 import {
   Card,
@@ -21,6 +22,10 @@ import {
 import { InfoTooltip } from './common/InfoTooltip';
 import { ResultInterpretation } from './common/ResultInterpretation';
 import { ErrorBoundary } from './common/ErrorBoundary';
+import { RecentChips } from './common/RecentChips';
+import { ResultActions } from './common/ResultActions';
+import { TlsIcon } from './common/ToolIcons';
+import { useToolHistory } from '../hooks/useToolHistory';
 import {
   interpretCertificateExpiry,
   interpretSignatureAlgorithm,
@@ -30,11 +35,16 @@ import {
   type Interpretation,
 } from '../../shared/utils/interpretations';
 
+const TOOL_KEY = 'tls';
+
 const TlsToolContent: React.FC = () => {
   const [host, setHost] = useState('');
   const [port, setPort] = useState('443');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TlsInfoResponse | null>(null);
+  const { entries, add, clear } = useToolHistory(TOOL_KEY);
+  const [searchParams] = useSearchParams();
+  const autoRanRef = useRef(false);
 
   const SafeInfoTooltip: React.FC<{ interpret: () => Interpretation }> = ({ interpret }) => {
     try {
@@ -46,19 +56,24 @@ const TlsToolContent: React.FC = () => {
     }
   };
 
-  const handleInspect = async () => {
-    if (!host.trim()) return;
+  const runInspect = async (h: string, p: string) => {
+    const trimmed = h.trim();
+    if (!trimmed) return;
+    const portNum = parseInt(p) || 443;
 
+    setHost(trimmed);
+    setPort(String(portNum));
     setLoading(true);
     setResult(null);
+    add(trimmed, String(portNum));
 
     try {
-      const data = await networkApi.tlsInfo(host.trim(), parseInt(port) || 443);
+      const data = await networkApi.tlsInfo(trimmed, portNum);
       setResult(data);
     } catch (error) {
       setResult({
-        host: host.trim(),
-        port: parseInt(port) || 443,
+        host: trimmed,
+        port: portNum,
         issuer: '',
         subject: '',
         validFrom: '',
@@ -75,6 +90,16 @@ const TlsToolContent: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (autoRanRef.current) return;
+    if (searchParams.get('tool') !== TOOL_KEY) return;
+    const q = searchParams.get('q');
+    if (!q) return;
+    autoRanRef.current = true;
+    runInspect(q, searchParams.get('extra') ?? '443');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const getExpiryVariant = (days: number): 'success' | 'warning' | 'error' => {
     if (days > 30) return 'success';
     if (days > 7) return 'warning';
@@ -84,7 +109,7 @@ const TlsToolContent: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardIcon>🔒</CardIcon>
+        <CardIcon><TlsIcon /></CardIcon>
         <div>
           <CardTitle>TLS/SSL Inspector</CardTitle>
           <CardDescription>Inspect certificates and security details</CardDescription>
@@ -98,7 +123,7 @@ const TlsToolContent: React.FC = () => {
           placeholder="example.com"
           value={host}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHost(e.target.value)}
-          onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleInspect()}
+          onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && runInspect(host, port)}
         />
       </InputGroup>
 
@@ -112,7 +137,9 @@ const TlsToolContent: React.FC = () => {
         />
       </InputGroup>
 
-      <Button onClick={handleInspect} disabled={loading || !host.trim()}>
+      <RecentChips entries={entries} onPick={(e) => runInspect(e.value, e.extra ?? '443')} onClear={clear} />
+
+      <Button onClick={() => runInspect(host, port)} disabled={loading || !host.trim()}>
         {loading ? <LoadingSpinner /> : 'Inspect Certificate'}
       </Button>
 
@@ -192,6 +219,13 @@ const TlsToolContent: React.FC = () => {
               })()}
             </>
           )}
+          <ResultActions
+            toolKey={TOOL_KEY}
+            identifier={`${result.host}_${result.port}`}
+            data={result as unknown as Record<string, unknown>}
+            shareValue={result.host}
+            shareExtra={String(result.port)}
+          />
         </ResultContainer>
       )}
     </Card>

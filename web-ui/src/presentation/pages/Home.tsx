@@ -392,6 +392,16 @@ const Icon = {
       <rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
     </svg>
   ),
+  Security: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" />
+    </svg>
+  ),
+  Bolt: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  ),
 };
 
 export const Home: React.FC = () => {
@@ -399,15 +409,14 @@ export const Home: React.FC = () => {
     <Page>
       <Hero>
         <div>
-          <Eyebrow>Network Intelligence Platform</Eyebrow>
+          <Eyebrow>Network Diagnostics</Eyebrow>
           <Headline>
-            Diagnose <span className="grad">every packet.</span><br />
-            <span className="muted">Understand the wire.</span>
+            Know your <span className="grad">network.</span><br />
+            <span className="muted">In seconds.</span>
           </Headline>
           <Lede>
-            A modern toolkit for engineers who care about latency, resolution, and trust.
-            Run ping, DNS, HTTP and TLS diagnostics with a clean interface and rigorous insight —
-            all powered by a hardened ASP.NET Core backend.
+            Check if a website is reachable, look up DNS records, inspect security certificates,
+            and analyze HTTP responses — all from one place, with clear and instant results.
           </Lede>
 
           <Actions>
@@ -416,9 +425,9 @@ export const Home: React.FC = () => {
           </Actions>
 
           <StatsRow>
-            <Stat><strong>4</strong><span>Diagnostic tools</span></Stat>
+            <Stat><strong>6</strong><span>Diagnostic tools</span></Stat>
             <Stat><strong>&lt; 50ms</strong><span>Typical query</span></Stat>
-            <Stat><strong>SSRF</strong><span>Hardened backend</span></Stat>
+            <Stat><strong>100%</strong><span>Free to use</span></Stat>
           </StatsRow>
         </div>
 
@@ -446,14 +455,19 @@ export const Home: React.FC = () => {
 
       <Features>
         <Feature>
+          <FIcon><Icon.Bolt /></FIcon>
+          <FTitle>Full Diagnostic</FTitle>
+          <FDesc>Run every check at once and get a unified, color-coded health report for any host.</FDesc>
+        </Feature>
+        <Feature>
           <FIcon><Icon.Ping /></FIcon>
           <FTitle>Connectivity</FTitle>
           <FDesc>Reach any host and measure round-trip latency with precise timing.</FDesc>
         </Feature>
         <Feature>
           <FIcon><Icon.Dns /></FIcon>
-          <FTitle>DNS Intelligence</FTitle>
-          <FDesc>Resolve A, AAAA, MX, NS and TXT records with structured output.</FDesc>
+          <FTitle>DNS Lookup</FTitle>
+          <FDesc>Resolve A, AAAA, MX, NS and TXT records with structured, human-readable output.</FDesc>
         </Feature>
         <Feature>
           <FIcon><Icon.Http /></FIcon>
@@ -464,6 +478,11 @@ export const Home: React.FC = () => {
           <FIcon><Icon.Tls /></FIcon>
           <FTitle>TLS Audit</FTitle>
           <FDesc>Read certificate chains, expiry windows, and cipher posture at a glance.</FDesc>
+        </Feature>
+        <Feature>
+          <FIcon><Icon.Security /></FIcon>
+          <FTitle>Security Headers</FTitle>
+          <FDesc>Audit a website's HTTP security posture and get an instant A+ to F grade.</FDesc>
         </Feature>
       </Features>
     </Page>

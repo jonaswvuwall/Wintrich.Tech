@@ -21,6 +21,7 @@ public sealed class NetworkController(
     DnsService dnsService,
     HttpAnalysisService httpAnalysisService,
     TlsService tlsService,
+    SecurityHeadersService securityHeadersService,
     UrlValidator urlValidator,
     ILogger<NetworkController> logger) : ControllerBase
 {
@@ -89,6 +90,23 @@ public sealed class NetworkController(
         urlValidator.ValidateHost(host.Trim());
 
         var response = await tlsService.InspectAsync(host.Trim());
+        return Ok(response);
+    }
+
+    /// <summary>Audit a URL for the presence of common HTTP security headers and assign a grade.</summary>
+    [HttpGet("security-headers")]
+    [ProducesResponseType<SecurityHeadersResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> SecurityHeaders([FromQuery] string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return BadRequest(new { error = "url query parameter is required" });
+
+        logger.LogInformation("Security headers audit request for URL: {Url}", url);
+        urlValidator.ValidateUrl(url.Trim());
+
+        var response = await securityHeadersService.AuditAsync(url.Trim());
         return Ok(response);
     }
 }
