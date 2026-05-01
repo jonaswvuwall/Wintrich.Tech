@@ -8,6 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+web-ui/node_modules
+web-ui/dist
+web-ui/dist-ssr
+web-api/bin
+web-api/obj
 dist
 dist-ssr
 *.local
