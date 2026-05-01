@@ -2,58 +2,38 @@ import styled from 'styled-components';
 import { theme } from '../styles/theme';
 
 export const Card = styled.div`
-  background: rgba(26, 26, 26, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid ${theme.colors.border};
-  border-radius: ${theme.borderRadius.lg};
-  padding: ${theme.spacing.xxl};
-  transition: all ${theme.transitions.normal};
   position: relative;
-  overflow: hidden;
   width: 100%;
+  padding: clamp(1.4rem, 2.4vw, 1.9rem);
+  border-radius: 22px;
+  background: rgba(14, 17, 23, 0.6);
+  border: 1px solid ${theme.colors.border};
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  transition: transform ${theme.transitions.normal}, border-color ${theme.transitions.normal}, box-shadow ${theme.transitions.normal};
+  overflow: visible;
 
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, ${theme.colors.primary} 0%, ${theme.colors.primaryLight} 100%);
-    transform: scaleX(0);
-    transition: transform ${theme.transitions.normal};
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(
-      circle,
-      rgba(0, 168, 232, 0.1) 0%,
-      transparent 50%
-    );
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: ${theme.gradients.glassBorder};
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
     opacity: 0;
     transition: opacity ${theme.transitions.normal};
     pointer-events: none;
   }
 
   &:hover {
-    border-color: ${theme.colors.primary};
-    box-shadow: 0 8px 32px rgba(0, 168, 232, 0.2);
-    transform: translateY(-4px) scale(1.005);
+    transform: translateY(-3px);
+    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow: 0 16px 44px rgba(34, 211, 238, 0.18);
 
-    &::before {
-      transform: scaleX(1);
-    }
-
-    &::after {
-      opacity: 1;
-    }
+    &::before { opacity: 1; }
   }
 `;
 
@@ -65,33 +45,38 @@ export const CardHeader = styled.div`
 `;
 
 export const CardIcon = styled.div`
-  width: 56px;
-  height: 56px;
-  border-radius: ${theme.borderRadius.md};
-  background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryDark} 100%);
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: ${theme.gradients.brandSoft};
+  border: 1px solid rgba(34, 211, 238, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.75rem;
-  box-shadow: 0 4px 20px rgba(0, 168, 232, 0.4);
+  font-size: 1.4rem;
+  color: ${theme.colors.primary};
+  flex-shrink: 0;
   transition: transform ${theme.transitions.normal};
 
   ${Card}:hover & {
-    transform: 5rem;
-  font-weight: 7
+    transform: scale(1.06) rotate(-4deg);
+  }
 `;
 
 export const CardTitle = styled.h2`
-  font-size: 1.25rem;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 1.15rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: ${theme.colors.text};
   margin: 0;
 `;
 
 export const CardDescription = styled.p`
   color: ${theme.colors.textSecondary};
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
   margin: 0;
+  margin-top: 0.15rem;
 `;
 
 export const InputGroup = styled.div`
@@ -100,83 +85,80 @@ export const InputGroup = styled.div`
 
 export const Label = styled.label`
   display: block;
-  color: ${theme.colors.textSecondary};
-  font-size: 0.875rem;
+  color: ${theme.colors.textMuted};
+  font-size: 0.78rem;
   font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   margin-bottom: ${theme.spacing.sm};
 `;
 
 export const Input = styled.input`
   width: 100%;
-  padding: ${theme.spacing.md};
-  background: rgba(10, 10, 10, 0.8);
+  padding: 0.85rem 1rem;
+  background: rgba(6, 7, 12, 0.6);
   border: 1px solid ${theme.colors.border};
-  border-radius: ${theme.borderRadius.md};
+  border-radius: 12px;
   color: ${theme.colors.text};
-  font-size: 0.9375rem;
+  font-size: 0.95rem;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
   transition: all ${theme.transitions.fast};
 
   &:focus {
     outline: none;
-    border-color: ${theme.colors.primary};
-    box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.2);
-    background: rgba(10, 10, 10, 0.95);
-    transform: translateY(-1px);
+    border-color: rgba(34, 211, 238, 0.6);
+    box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.15);
+    background: rgba(6, 7, 12, 0.85);
   }
 
   &:hover:not(:focus) {
-    border-color: ${theme.colors.primaryDark};
+    border-color: ${theme.colors.borderStrong};
   }
 
   &::placeholder {
-    color: ${theme.colors.textSecondary};
+    color: ${theme.colors.textMuted};
+    font-family: 'Inter', sans-serif;
   }
 `;
 
 export const Button = styled.button`
   width: 100%;
-  padding: ${theme.spacing.md} ${theme.spacing.lg};
-  background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryDark} 100%);
+  padding: 0.9rem 1.25rem;
+  background: ${theme.gradients.brand};
   border: none;
-  border-radius: ${theme.borderRadius.md};
-  color: ${theme.colors.text};
-  font-size: 0.9375rem;
+  border-radius: 12px;
+  color: #06070C;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all ${theme.transitions.fast};
-  box-shadow: ${theme.shadows.md};
+  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.25);
   position: relative;
   overflow: hidden;
 
   &::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
+    inset: 0;
+    background: linear-gradient(135deg, #A78BFA 0%, #22D3EE 100%);
+    opacity: 0;
+    transition: opacity ${theme.transitions.normal};
   }
+
+  > * { position: relative; z-index: 1; }
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 168, 232, 0.4);
-    
-    &::before {
-      width: 300px;
-      height: 300px;
-    }
+    box-shadow: 0 12px 32px rgba(167, 139, 250, 0.4);
+    &::before { opacity: 1; }
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0) scale(0.98);
+    transform: translateY(0) scale(0.99);
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
   }
 `;
@@ -184,31 +166,21 @@ export const Button = styled.button`
 export const ResultContainer = styled.div<{ success?: boolean }>`
   margin-top: ${theme.spacing.lg};
   padding: ${theme.spacing.lg};
-  background: ${props => props.success === false 
-    ? 'rgba(239, 71, 111, 0.1)' 
-    : 'rgba(0, 168, 232, 0.05)'};
-  border: 1px solid ${props => props.success === false 
-    ? theme.colors.error 
-    : 'rgba(0, 168, 232, 0.3)'};
-  border-radius: ${theme.borderRadius.md};
-  max-height: 500px;
-  overflow-y: auto;
+  background: ${props => props.success === false
+    ? 'rgba(244, 63, 94, 0.08)'
+    : 'rgba(34, 211, 238, 0.05)'};
+  border: 1px solid ${props => props.success === false
+    ? 'rgba(244, 63, 94, 0.5)'
+    : 'rgba(34, 211, 238, 0.25)'};
+  border-radius: 14px;
   backdrop-filter: blur(10px);
   animation: fadeInExpand 0.4s ease-out;
+  position: relative;
+  z-index: 1;
 
   @keyframes fadeInExpand {
-    from {
-      opacity: 0;
-      max-height: 0;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-    to {
-      opacity: 1;
-      max-height: 500px;
-      padding-top: ${theme.spacing.lg};
-      padding-bottom: ${theme.spacing.lg};
-    }
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 `;
 
@@ -216,7 +188,8 @@ export const ResultItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: ${theme.spacing.sm} 0;
+  gap: 1rem;
+  padding: 0.6rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   transition: all ${theme.transitions.fast};
   animation: slideInLeft 0.3s ease-out backwards;
@@ -227,32 +200,25 @@ export const ResultItem = styled.div`
 
   &:hover {
     padding-left: ${theme.spacing.sm};
-    background: rgba(0, 168, 232, 0.05);
-    border-radius: ${theme.borderRadius.sm};
+    background: rgba(34, 211, 238, 0.04);
+    border-radius: 8px;
   }
 
   @keyframes slideInLeft {
-    from {
-      opacity: 0;
-      transform: translateX(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-12px); }
+    to { opacity: 1; transform: translateX(0); }
   }
-rgba(0, 168, 232, 0.2)
-  /* Stagger delay for children */
+
   ${Array.from({ length: 20 }, (_, i) => `
-    &:nth-child(${i + 1}) {
-      animation-delay: ${i * 0.05}s;
-    }
+    &:nth-child(${i + 1}) { animation-delay: ${i * 0.05}s; }
   `).join('')}
 `;
 
 export const ResultLabel = styled.span`
+  display: flex;
+  align-items: center;
   color: ${theme.colors.textSecondary};
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 500;
 `;
 
@@ -260,15 +226,17 @@ export const ResultValue = styled.span<{ highlight?: boolean }>`
   color: ${props => props.highlight ? theme.colors.primary : theme.colors.text};
   font-size: 0.875rem;
   font-weight: ${props => props.highlight ? 600 : 400};
-  font-family: ${props => props.highlight ? "'Fira Code', monospace" : 'inherit'};
+  font-family: ${props => props.highlight ? "'JetBrains Mono', monospace" : 'inherit'};
+  text-align: right;
+  word-break: break-all;
 `;
 
 export const LoadingSpinner = styled.div`
   display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 3px solid ${theme.colors.border};
-  border-top-color: ${theme.colors.primary};
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(6, 7, 12, 0.4);
+  border-top-color: #06070C;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 
@@ -281,46 +249,46 @@ export const ErrorMessage = styled.div`
   color: ${theme.colors.error};
   font-size: 0.875rem;
   margin-top: ${theme.spacing.sm};
-  padding: ${theme.spacing.sm} ${theme.spacing.md};
-  background: rgba(239, 71, 111, 0.1);
+  padding: 0.65rem 0.85rem;
+  background: rgba(244, 63, 94, 0.08);
   border-left: 3px solid ${theme.colors.error};
-  border-radius: ${theme.borderRadius.sm};
+  border-radius: 8px;
 `;
 
 export const Badge = styled.span<{ variant?: 'success' | 'warning' | 'error' | 'info' }>`
   display: inline-block;
-  padding: ${theme.spacing.xs} ${theme.spacing.sm};
-  border-radius: ${theme.borderRadius.sm};
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
   background: ${props => {
     switch (props.variant) {
-      case 'success': return 'rgba(6, 214, 160, 0.2)';
-      case 'warning': return 'rgba(255, 214, 10, 0.2)';
-      case 'error': return 'rgba(239, 71, 111, 0.2)';
-      default: return 'rgba(0, 168, 232, 0.2)';
+      case 'success': return 'rgba(16, 224, 168, 0.15)';
+      case 'warning': return 'rgba(251, 191, 36, 0.15)';
+      case 'error':   return 'rgba(244, 63, 94, 0.15)';
+      default:        return 'rgba(34, 211, 238, 0.15)';
+    }
+  }};
+  border: 1px solid ${props => {
+    switch (props.variant) {
+      case 'success': return 'rgba(16, 224, 168, 0.4)';
+      case 'warning': return 'rgba(251, 191, 36, 0.4)';
+      case 'error':   return 'rgba(244, 63, 94, 0.4)';
+      default:        return 'rgba(34, 211, 238, 0.4)';
     }
   }};
   color: ${props => {
     switch (props.variant) {
       case 'success': return theme.colors.success;
       case 'warning': return theme.colors.warning;
-      case 'error': return theme.colors.error;
-      default: return theme.colors.primary;
+      case 'error':   return theme.colors.error;
+      default:        return theme.colors.primary;
     }
   }};
   transition: all ${theme.transitions.fast};
-  cursor: default;
 
   &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px ${props => {
-      switch (props.variant) {
-        case 'success': return 'rgba(6, 214, 160, 0.3)';
-        case 'warning': return 'rgba(255, 214, 10, 0.3)';
-        case 'error': return 'rgba(239, 71, 111, 0.3)';
-        default: return 'rgba(0, 168, 232, 0.3)';
-      }
-    }};
+    transform: scale(1.04);
   }
 `;

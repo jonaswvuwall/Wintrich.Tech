@@ -18,11 +18,32 @@ import {
   ErrorMessage,
   Badge,
 } from './StyledComponents';
+import { InfoTooltip } from './common/InfoTooltip';
+import { ResultInterpretation } from './common/ResultInterpretation';
+import { ErrorBoundary } from './common/ErrorBoundary';
+import {
+  interpretStatusCode,
+  interpretResponseTime,
+  interpretContentType,
+  interpretHeaders,
+  interpretHttpResult,
+  type Interpretation,
+} from '../../shared/utils/interpretations';
 
-export const HttpTool: React.FC = () => {
+const HttpToolContent: React.FC = () => {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HttpAnalysisResponse | null>(null);
+
+  const SafeInfoTooltip: React.FC<{ interpret: () => Interpretation }> = ({ interpret }) => {
+    try {
+      const interpretation = interpret();
+      return <InfoTooltip interpretation={interpretation} />;
+    } catch (error) {
+      console.error('Error in interpretation:', error);
+      return null;
+    }
+  };
 
   const handleAnalyze = async () => {
     if (!url.trim()) return;
@@ -84,21 +105,33 @@ export const HttpTool: React.FC = () => {
       {result && (
         <ResultContainer success={!result.error}>
           {result.error ? (
-            <ErrorMessage>{result.error}</ErrorMessage>
+            <>
+              <ErrorMessage>{result.error}</ErrorMessage>
+              <ResultInterpretation {...interpretHttpResult(result)} />
+            </>
           ) : (
             <>
               <ResultItem>
-                <ResultLabel>Status Code</ResultLabel>
+                <ResultLabel>
+                  Status Code
+                  <SafeInfoTooltip interpret={() => interpretStatusCode(result.statusCode)} />
+                </ResultLabel>
                 <Badge variant={getStatusVariant(result.statusCode)}>
                   {result.statusCode}
                 </Badge>
               </ResultItem>
               <ResultItem>
-                <ResultLabel>Response Time</ResultLabel>
+                <ResultLabel>
+                  Response Time
+                  <SafeInfoTooltip interpret={() => interpretResponseTime(result.responseTime)} />
+                </ResultLabel>
                 <ResultValue highlight>{result.responseTime} ms</ResultValue>
               </ResultItem>
               <ResultItem>
-                <ResultLabel>Content Type</ResultLabel>
+                <ResultLabel>
+                  Content Type
+                  <SafeInfoTooltip interpret={() => interpretContentType(result.contentType || '')} />
+                </ResultLabel>
                 <ResultValue>{result.contentType || 'N/A'}</ResultValue>
               </ResultItem>
               <ResultItem>
@@ -114,7 +147,10 @@ export const HttpTool: React.FC = () => {
               {Object.keys(result.headers).length > 0 && (
                 <>
                   <ResultItem>
-                    <ResultLabel>Headers</ResultLabel>
+                    <ResultLabel>
+                      Headers
+                      <SafeInfoTooltip interpret={() => interpretHeaders(Object.keys(result.headers).length)} />
+                    </ResultLabel>
                     <ResultValue>{Object.keys(result.headers).length} total</ResultValue>
                   </ResultItem>
                   {Object.entries(result.headers).slice(0, 5).map(([key, value]) => (
@@ -127,10 +163,26 @@ export const HttpTool: React.FC = () => {
                   ))}
                 </>
               )}
+              {(() => {
+                try {
+                  return <ResultInterpretation {...interpretHttpResult(result)} />;
+                } catch (error) {
+                  console.error('Error interpreting HTTP result:', error);
+                  return null;
+                }
+              })()}
             </>
           )}
         </ResultContainer>
       )}
     </Card>
+  );
+};
+
+export const HttpTool: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <HttpToolContent />
+    </ErrorBoundary>
   );
 };

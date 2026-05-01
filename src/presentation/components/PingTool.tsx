@@ -18,11 +18,31 @@ import {
   ErrorMessage,
   Badge,
 } from './StyledComponents';
+import { InfoTooltip } from './common/InfoTooltip';
+import { ResultInterpretation } from './common/ResultInterpretation';
+import { ErrorBoundary } from './common/ErrorBoundary';
+import {
+  interpretLatency,
+  interpretReachability,
+  interpretIPv4,
+  interpretPingResult,
+  type Interpretation,
+} from '../../shared/utils/interpretations';
 
-export const PingTool: React.FC = () => {
+const PingToolContent: React.FC = () => {
   const [target, setTarget] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PingResponse | null>(null);
+
+  const SafeInfoTooltip: React.FC<{ interpret: () => Interpretation }> = ({ interpret }) => {
+    try {
+      const interpretation = interpret();
+      return <InfoTooltip interpretation={interpretation} />;
+    } catch (error) {
+      console.error('Error in interpretation:', error);
+      return null;
+    }
+  };
 
   const handlePing = async () => {
     if (!target.trim()) return;
@@ -75,11 +95,24 @@ export const PingTool: React.FC = () => {
       {result && (
         <ResultContainer success={result.reachable && !result.error}>
           {result.error ? (
-            <ErrorMessage>{result.error}</ErrorMessage>
+            <>
+              <ErrorMessage>{result.error}</ErrorMessage>
+              {(() => {
+                try {
+                  return <ResultInterpretation {...interpretPingResult(result)} />;
+                } catch (error) {
+                  console.error('Error interpreting Ping result:', error);
+                  return null;
+                }
+              })()}
+            </>
           ) : (
             <>
               <ResultItem>
-                <ResultLabel>Status</ResultLabel>
+                <ResultLabel>
+                  Status
+                  <SafeInfoTooltip interpret={() => interpretReachability(result.reachable, result.host)} />
+                </ResultLabel>
                 <Badge variant={result.reachable ? 'success' : 'error'}>
                   {result.reachable ? 'Reachable' : 'Unreachable'}
                 </Badge>
@@ -90,20 +123,42 @@ export const PingTool: React.FC = () => {
               </ResultItem>
               {result.ip && (
                 <ResultItem>
-                  <ResultLabel>IP Address</ResultLabel>
+                  <ResultLabel>
+                    IP Address
+                    <SafeInfoTooltip interpret={() => interpretIPv4(result.ip || '')} />
+                  </ResultLabel>
                   <ResultValue highlight>{result.ip}</ResultValue>
                 </ResultItem>
               )}
               {result.latencyMs !== null && (
                 <ResultItem>
-                  <ResultLabel>Latency</ResultLabel>
+                  <ResultLabel>
+                    Latency
+                    <SafeInfoTooltip interpret={() => interpretLatency(result.latencyMs ?? 0)} />
+                  </ResultLabel>
                   <ResultValue highlight>{result.latencyMs} ms</ResultValue>
                 </ResultItem>
               )}
+              {(() => {
+                try {
+                  return <ResultInterpretation {...interpretPingResult(result)} />;
+                } catch (error) {
+                  console.error('Error interpreting Ping result:', error);
+                  return null;
+                }
+              })()}
             </>
           )}
         </ResultContainer>
       )}
     </Card>
+  );
+};
+
+export const PingTool: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <PingToolContent />
+    </ErrorBoundary>
   );
 };
