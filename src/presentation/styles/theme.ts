@@ -1,20 +1,25 @@
 export const theme = {
   colors: {
-    primary: '#00A8E8',      // Light blue
-    primaryDark: '#0077B6',  // Darker blue
-    primaryLight: '#48CAE4', // Lighter blue
-    secondary: '#90E0EF',    // Very light blue
-    background: '#0A0A0A',   // Near black
-    surface: '#1A1A1A',      // Dark gray
-    surfaceLight: '#2A2A2A', // Lighter dark gray
-    text: '#FFFFFF',         // White
-    textSecondary: '#B0B0B0',// Light gray
-    success: '#06D6A0',      // Green
-    warning: '#FFD60A',      // Yellow
-    error: '#EF476F',        // Red
-    info: '#00A8E8',         // Blue (info)
-    border: '#333333',       // Dark border
-    cardBackground: '#1A1A1A', // Card background
+    primary: '#22D3EE',        // Electric cyan
+    primaryDark: '#0891B2',    // Deep cyan
+    primaryLight: '#67E8F9',   // Light cyan
+    accent: '#A78BFA',         // Violet accent
+    accentDark: '#7C3AED',     // Deep violet
+    secondary: '#7C9CFF',      // Bridge blue
+    background: '#06070C',     // Near black ink
+    backgroundAlt: '#0A0F1A',  // Slight blue ink
+    surface: '#0E1117',        // Card surface
+    surfaceLight: '#161B22',   // Elevated surface
+    text: '#F4F4F5',           // Off white
+    textSecondary: '#94A3B8',  // Slate
+    textMuted: '#64748B',      // Muted slate
+    success: '#10E0A8',        // Mint
+    warning: '#FBBF24',        // Amber
+    error: '#F43F5E',           // Rose
+    info: '#22D3EE',
+    border: 'rgba(255, 255, 255, 0.08)',
+    borderStrong: 'rgba(255, 255, 255, 0.14)',
+    cardBackground: 'rgba(14, 17, 23, 0.72)',
   },
   spacing: {
     xs: '0.25rem',
@@ -31,10 +36,17 @@ export const theme = {
     xl: '1.5rem',
   },
   shadows: {
-    sm: '0 2px 4px rgba(0, 168, 232, 0.1)',
-    md: '0 4px 8px rgba(0, 168, 232, 0.15)',
-    lg: '0 8px 16px rgba(0, 168, 232, 0.2)',
-    glow: '0 0 20px rgba(0, 168, 232, 0.3)',
+    sm: '0 2px 8px rgba(34, 211, 238, 0.08)',
+    md: '0 6px 20px rgba(34, 211, 238, 0.12)',
+    lg: '0 16px 48px rgba(34, 211, 238, 0.18)',
+    glow: '0 0 32px rgba(34, 211, 238, 0.35)',
+    glowViolet: '0 0 32px rgba(167, 139, 250, 0.35)',
+  },
+  gradients: {
+    brand: 'linear-gradient(135deg, #22D3EE 0%, #7C9CFF 55%, #A78BFA 100%)',
+    brandSoft: 'linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(167,139,250,0.15) 100%)',
+    text: 'linear-gradient(135deg, #E8FBFF 0%, #FFFFFF 50%, #E0E7FF 100%)',
+    glassBorder: 'linear-gradient(135deg, rgba(34,211,238,0.4) 0%, rgba(167,139,250,0.4) 100%)',
   },
   transitions: {
     fast: '150ms ease-in-out',
