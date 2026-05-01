@@ -623,11 +623,12 @@ export const interpretDnsResult = (result: {
 
 export const interpretHttpResult = (result: {
   url: string;
-  statusCode: number;
-  responseTime: number;
-  contentLength: number;
-  contentType: string;
-  redirectUrl: string | null;
+  status: number | null;
+  responseTimeMs: number | null;
+  contentLength: number | null;
+  contentType: string | null;
+  finalUrl?: string | null;
+  redirectChain?: string[] | null;
   error: string | null;
 }): OverallInterpretation => {
   if (result.error) {
@@ -648,48 +649,51 @@ export const interpretHttpResult = (result: {
   let title = '';
   let summary = '';
 
+  const code = result.status ?? 0;
+  const rt = result.responseTimeMs ?? 0;
+
   // Analyze status code
-  if (result.statusCode >= 200 && result.statusCode < 300) {
+  if (code >= 200 && code < 300) {
     title = 'Request Successful';
-    summary = `The server responded successfully with status ${result.statusCode}. `;
-    details.push(`✓ Status ${result.statusCode}: ${getStatusCodeMeaning(result.statusCode)}`);
-  } else if (result.statusCode >= 300 && result.statusCode < 400) {
+    summary = `The server responded successfully with status ${code}. `;
+    details.push(`✓ Status ${code}: ${getStatusCodeMeaning(code)}`);
+  } else if (code >= 300 && code < 400) {
     title = 'Redirection';
-    summary = `Request redirected (status ${result.statusCode}). `;
+    summary = `Request redirected (status ${code}). `;
     severity = 'info';
-    details.push(`→ Status ${result.statusCode}: ${getStatusCodeMeaning(result.statusCode)}`);
-    if (result.redirectUrl) {
-      details.push(`Redirecting to: ${result.redirectUrl}`);
+    details.push(`→ Status ${code}: ${getStatusCodeMeaning(code)}`);
+    if (result.finalUrl && result.finalUrl !== result.url) {
+      details.push(`Final URL: ${result.finalUrl}`);
     }
-  } else if (result.statusCode >= 400 && result.statusCode < 500) {
+  } else if (code >= 400 && code < 500) {
     title = 'Client Error';
-    summary = `Request failed with status ${result.statusCode}. `;
+    summary = `Request failed with status ${code}. `;
     severity = 'warning';
-    details.push(`⚠ Status ${result.statusCode}: ${getStatusCodeMeaning(result.statusCode)}`);
+    details.push(`⚠ Status ${code}: ${getStatusCodeMeaning(code)}`);
   } else {
     title = 'Server Error';
-    summary = `Server error (status ${result.statusCode}). `;
+    summary = `Server error (status ${code}). `;
     severity = 'error';
-    details.push(`✕ Status ${result.statusCode}: ${getStatusCodeMeaning(result.statusCode)}`);
+    details.push(`✕ Status ${code}: ${getStatusCodeMeaning(code)}`);
   }
 
   // Analyze response time
-  if (result.responseTime < 100) {
-    summary += `Response time is excellent (${result.responseTime}ms).`;
-    details.push(`⚡ Very fast response: ${result.responseTime}ms`);
-  } else if (result.responseTime < 300) {
-    summary += `Response time is good (${result.responseTime}ms).`;
-    details.push(`✓ Fast response: ${result.responseTime}ms`);
-  } else if (result.responseTime < 1000) {
-    summary += `Response time is acceptable (${result.responseTime}ms).`;
-    details.push(`○ Acceptable response: ${result.responseTime}ms`);
-  } else if (result.responseTime < 3000) {
-    summary += `Response time is slow (${result.responseTime}ms).`;
-    details.push(`⚠ Slow response: ${result.responseTime}ms - may affect user experience`);
+  if (rt < 100) {
+    summary += `Response time is excellent (${rt}ms).`;
+    details.push(`⚡ Very fast response: ${rt}ms`);
+  } else if (rt < 300) {
+    summary += `Response time is good (${rt}ms).`;
+    details.push(`✓ Fast response: ${rt}ms`);
+  } else if (rt < 1000) {
+    summary += `Response time is acceptable (${rt}ms).`;
+    details.push(`○ Acceptable response: ${rt}ms`);
+  } else if (rt < 3000) {
+    summary += `Response time is slow (${rt}ms).`;
+    details.push(`⚠ Slow response: ${rt}ms - may affect user experience`);
     if (severity === 'success') severity = 'warning';
   } else {
-    summary += `Response time is very slow (${result.responseTime}ms).`;
-    details.push(`✕ Very slow response: ${result.responseTime}ms - poor performance`);
+    summary += `Response time is very slow (${rt}ms).`;
+    details.push(`✕ Very slow response: ${rt}ms - poor performance`);
     if (severity === 'success' || severity === 'info') severity = 'warning';
   }
 
@@ -699,7 +703,7 @@ export const interpretHttpResult = (result: {
     details.push(`Content: ${typeInfo.meaning}`);
   }
 
-  if (result.contentLength > 0) {
+  if (result.contentLength != null && result.contentLength > 0) {
     const sizeKB = (result.contentLength / 1024).toFixed(2);
     const sizeMB = (result.contentLength / 1024 / 1024).toFixed(2);
     if (result.contentLength > 1024 * 1024) {
@@ -719,22 +723,23 @@ export const interpretHttpResult = (result: {
 
 export const interpretTlsResult = (result: {
   host: string;
-  port: number;
-  issuer: string;
-  subject: string;
-  validFrom: string;
-  validTo: string;
-  daysUntilExpiry: number;
-  signatureAlgorithm: string;
-  version: number;
-  subjectAlternativeNames: string[];
+  protocol: string | null;
+  cipherSuite: string | null;
+  issuer: string | null;
+  subject: string | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  daysUntilExpiry: number | null;
+  expired: boolean | null;
+  serialNumber: string | null;
+  subjectAlternativeNames: string[] | null;
   error: string | null;
 }): OverallInterpretation => {
   try {
     if (result.error) {
       return {
         title: 'TLS Inspection Failed',
-        summary: `Unable to retrieve TLS certificate for ${result.host}:${result.port}. The server may not support TLS or is unreachable.`,
+        summary: `Unable to retrieve TLS certificate for ${result.host}. The server may not support TLS or is unreachable.`,
         details: [
           'Possible causes: Server doesn\'t support HTTPS, wrong port, connection blocked',
           'Port 443 is standard for HTTPS - verify the correct port is being used',
@@ -749,54 +754,57 @@ export const interpretTlsResult = (result: {
     let title = '';
     let summary = '';
 
+    const days = result.daysUntilExpiry ?? 0;
+
     // Analyze expiry
-    if (result.daysUntilExpiry < 0) {
+    if (days < 0) {
       title = 'Certificate EXPIRED';
-      summary = `⚠️ CRITICAL: The certificate for ${result.host} has EXPIRED ${Math.abs(result.daysUntilExpiry)} days ago! Connections are insecure.`;
+      summary = `⚠️ CRITICAL: The certificate for ${result.host} has EXPIRED ${Math.abs(days)} days ago! Connections are insecure.`;
       severity = 'error';
       details.push('✕ Certificate has expired - immediate renewal required!');
       details.push('All connections to this server are showing security warnings');
-    } else if (result.daysUntilExpiry < 7) {
+    } else if (days < 7) {
       title = 'Certificate Expiring Soon';
-      summary = `⚠️ The certificate for ${result.host} expires in ${result.daysUntilExpiry} days. Immediate renewal recommended!`;
+      summary = `⚠️ The certificate for ${result.host} expires in ${days} days. Immediate renewal recommended!`;
       severity = 'error';
-      details.push(`✕ Only ${result.daysUntilExpiry} days until expiry - renew immediately!`);
-    } else if (result.daysUntilExpiry < 30) {
+      details.push(`✕ Only ${days} days until expiry - renew immediately!`);
+    } else if (days < 30) {
       title = 'Certificate Renewal Needed';
-      summary = `The certificate for ${result.host} expires in ${result.daysUntilExpiry} days. Plan renewal soon to avoid service disruption.`;
+      summary = `The certificate for ${result.host} expires in ${days} days. Plan renewal soon to avoid service disruption.`;
       severity = 'warning';
-      details.push(`⚠ Expires in ${result.daysUntilExpiry} days - schedule renewal`);
+      details.push(`⚠ Expires in ${days} days - schedule renewal`);
     } else {
       title = 'Certificate Valid';
-      summary = `The certificate for ${result.host} is valid for ${result.daysUntilExpiry} more days.`;
-      details.push(`✓ Valid for ${result.daysUntilExpiry} days`);
+      summary = `The certificate for ${result.host} is valid for ${days} more days.`;
+      details.push(`✓ Valid for ${days} days`);
     }
 
     // Certificate details
     details.push(`Issued by: ${result.issuer || 'Unknown'}`);
     
-    if (result.validFrom && result.validTo) {
+    if (result.validFrom && result.validUntil) {
       try {
-        details.push(`Valid from ${new Date(result.validFrom).toLocaleDateString()} to ${new Date(result.validTo).toLocaleDateString()}`);
+        details.push(`Valid from ${new Date(result.validFrom).toLocaleDateString()} to ${new Date(result.validUntil).toLocaleDateString()}`);
       } catch (e) {
         details.push(`Valid dates available`);
       }
     }
 
-    // Analyze signature algorithm
-    if (result.signatureAlgorithm) {
-      const alg = result.signatureAlgorithm.toLowerCase();
-      if (alg.includes('sha256') || alg.includes('sha384') || alg.includes('sha512')) {
-        details.push(`✓ Strong signature: ${result.signatureAlgorithm}`);
-      } else if (alg.includes('sha1')) {
-        details.push(`⚠ Weak signature: ${result.signatureAlgorithm} (deprecated)`);
-        if (severity === 'success') severity = 'warning';
-      } else if (alg.includes('md5')) {
-        details.push(`✕ Insecure signature: ${result.signatureAlgorithm} (broken!)`);
-        severity = 'error';
+    // Protocol
+    if (result.protocol) {
+      if (result.protocol.includes('1.3')) {
+        details.push(`✓ Modern protocol: ${result.protocol}`);
+      } else if (result.protocol.includes('1.2')) {
+        details.push(`✓ Protocol: ${result.protocol}`);
       } else {
-        details.push(`Signature: ${result.signatureAlgorithm}`);
+        details.push(`⚠ Outdated protocol: ${result.protocol}`);
+        if (severity === 'success') severity = 'warning';
       }
+    }
+
+    // Cipher suite
+    if (result.cipherSuite) {
+      details.push(`Cipher suite: ${result.cipherSuite}`);
     }
 
     // SANs

@@ -71,9 +71,7 @@ public sealed class TlsService
 
             sslStream = new SslStream(
                 tcpClient.GetStream(),
-                leaveInnerStreamOpen: false,
-                // Accept any certificate — we are inspecting, not validating
-                userCertificateValidationCallback: (_, _, _, _) => true);
+                leaveInnerStreamOpen: false);
 
             await sslStream.AuthenticateAsClientAsync(
                 new SslClientAuthenticationOptions

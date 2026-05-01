@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
 import { theme } from '../styles/theme';
 import { Logo } from './Logo';
-
 const Nav = styled.nav<{ $scrolled: boolean }>`
   position: fixed;
   top: 0;
@@ -27,9 +26,9 @@ const Nav = styled.nav<{ $scrolled: boolean }>`
 const Bar = styled.div<{ $scrolled: boolean }>`
   pointer-events: auto;
   width: min(1320px, 100%);
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: ${theme.spacing.md};
   padding: ${p => p.$scrolled ? '0.55rem 0.75rem 0.55rem 1.1rem' : '0.7rem 0.85rem 0.7rem 1.25rem'};
   background: ${p => p.$scrolled ? 'rgba(10, 12, 18, 0.72)' : 'rgba(10, 12, 18, 0.45)'};
@@ -66,8 +65,8 @@ const Mark = styled.span.attrs({ className: 'wt-mark' })`
 const Wordmark = styled.span`
   font-family: 'Space Grotesk', 'Inter', sans-serif;
   font-weight: 700;
-  font-size: 1.02rem;
-  letter-spacing: -0.01em;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
   white-space: nowrap;
 
   span.dot {
@@ -78,7 +77,7 @@ const Wordmark = styled.span`
   }
 
   @media (max-width: 480px) {
-    display: none;
+    font-size: 1.1rem;
   }
 `;
 
@@ -116,36 +115,6 @@ const StyledLink = styled(Link)<{ $active: boolean }>`
   }
 `;
 
-const CtaWrap = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${theme.spacing.sm};
-
-  @media (max-width: 640px) {
-    display: none;
-  }
-`;
-
-const Cta = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 1rem;
-  border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-decoration: none;
-  color: #06070C;
-  background: ${theme.gradients.brand};
-  box-shadow: 0 6px 20px rgba(34, 211, 238, 0.35);
-  transition: all ${theme.transitions.fast};
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 28px rgba(167, 139, 250, 0.45);
-  }
-`;
-
 export const Navigation: React.FC = () => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -162,7 +131,7 @@ export const Navigation: React.FC = () => {
       <Bar $scrolled={scrolled}>
         <Brand to="/" aria-label="Wintrich.Tech home">
           <Mark>
-            <Logo size={32} />
+            <Logo size={40} />
           </Mark>
           <Wordmark>
             Wintrich<span className="dot">.Tech</span>
@@ -175,9 +144,7 @@ export const Navigation: React.FC = () => {
           <StyledLink to="/about" $active={location.pathname === '/about'}>About</StyledLink>
         </Links>
 
-        <CtaWrap>
-          <Cta to="/dashboard">Launch →</Cta>
-        </CtaWrap>
+        <span aria-hidden />
       </Bar>
     </Nav>
   );

@@ -70,12 +70,15 @@ const HttpToolContent: React.FC = () => {
     } catch (error) {
       setResult({
         url: trimmed,
-        statusCode: 0,
-        responseTime: 0,
-        contentLength: 0,
-        contentType: '',
-        headers: {},
-        redirectUrl: null,
+        status: null,
+        statusText: null,
+        responseTimeMs: null,
+        contentLength: null,
+        contentType: null,
+        server: null,
+        headers: null,
+        redirectChain: null,
+        finalUrl: null,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
@@ -139,18 +142,18 @@ const HttpToolContent: React.FC = () => {
               <ResultItem>
                 <ResultLabel>
                   Status Code
-                  <SafeInfoTooltip interpret={() => interpretStatusCode(result.statusCode)} />
+                  <SafeInfoTooltip interpret={() => interpretStatusCode(result.status ?? 0)} />
                 </ResultLabel>
-                <Badge variant={getStatusVariant(result.statusCode)}>
-                  {result.statusCode}
+                <Badge variant={getStatusVariant(result.status ?? 0)}>
+                  {result.status ?? '—'}{result.statusText ? ` ${result.statusText}` : ''}
                 </Badge>
               </ResultItem>
               <ResultItem>
                 <ResultLabel>
                   Response Time
-                  <SafeInfoTooltip interpret={() => interpretResponseTime(result.responseTime)} />
+                  <SafeInfoTooltip interpret={() => interpretResponseTime(result.responseTimeMs ?? 0)} />
                 </ResultLabel>
-                <ResultValue highlight>{result.responseTime} ms</ResultValue>
+                <ResultValue highlight>{result.responseTimeMs ?? '—'} ms</ResultValue>
               </ResultItem>
               <ResultItem>
                 <ResultLabel>
@@ -161,20 +164,32 @@ const HttpToolContent: React.FC = () => {
               </ResultItem>
               <ResultItem>
                 <ResultLabel>Content Length</ResultLabel>
-                <ResultValue>{result.contentLength.toLocaleString()} bytes</ResultValue>
+                <ResultValue>{result.contentLength != null ? `${result.contentLength.toLocaleString()} bytes` : '—'}</ResultValue>
               </ResultItem>
-              {result.redirectUrl && (
+              {result.server && (
                 <ResultItem>
-                  <ResultLabel>Redirect URL</ResultLabel>
-                  <ResultValue highlight>{result.redirectUrl}</ResultValue>
+                  <ResultLabel>Server</ResultLabel>
+                  <ResultValue>{result.server}</ResultValue>
                 </ResultItem>
               )}
-              {Object.keys(result.headers).length > 0 && (
+              {result.finalUrl && result.finalUrl !== result.url && (
+                <ResultItem>
+                  <ResultLabel>Final URL</ResultLabel>
+                  <ResultValue highlight>{result.finalUrl}</ResultValue>
+                </ResultItem>
+              )}
+              {result.redirectChain && result.redirectChain.length > 1 && (
+                <ResultItem>
+                  <ResultLabel>Redirects</ResultLabel>
+                  <ResultValue>{result.redirectChain.length - 1} hop(s)</ResultValue>
+                </ResultItem>
+              )}
+              {result.headers && Object.keys(result.headers).length > 0 && (
                 <>
                   <ResultItem>
                     <ResultLabel>
                       Headers
-                      <SafeInfoTooltip interpret={() => interpretHeaders(Object.keys(result.headers).length)} />
+                      <SafeInfoTooltip interpret={() => interpretHeaders(Object.keys(result.headers!).length)} />
                     </ResultLabel>
                     <ResultValue>{Object.keys(result.headers).length} total</ResultValue>
                   </ResultItem>

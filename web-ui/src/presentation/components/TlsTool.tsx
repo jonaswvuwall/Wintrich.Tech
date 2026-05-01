@@ -28,8 +28,6 @@ import { TlsIcon } from './common/ToolIcons';
 import { useToolHistory } from '../hooks/useToolHistory';
 import {
   interpretCertificateExpiry,
-  interpretSignatureAlgorithm,
-  interpretTlsVersion,
   interpretSAN,
   interpretTlsResult,
   type Interpretation,
@@ -73,16 +71,16 @@ const TlsToolContent: React.FC = () => {
     } catch (error) {
       setResult({
         host: trimmed,
-        port: portNum,
-        issuer: '',
-        subject: '',
-        validFrom: '',
-        validTo: '',
-        daysUntilExpiry: 0,
-        serialNumber: '',
-        signatureAlgorithm: '',
-        version: 0,
-        subjectAlternativeNames: [],
+        protocol: null,
+        cipherSuite: null,
+        issuer: null,
+        subject: null,
+        validFrom: null,
+        validUntil: null,
+        daysUntilExpiry: null,
+        expired: null,
+        serialNumber: null,
+        subjectAlternativeNames: null,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
@@ -152,52 +150,46 @@ const TlsToolContent: React.FC = () => {
               <ResultItem>
                 <ResultLabel>
                   Days Until Expiry
-                  <SafeInfoTooltip interpret={() => interpretCertificateExpiry(result.daysUntilExpiry)} />
+                  <SafeInfoTooltip interpret={() => interpretCertificateExpiry(result.daysUntilExpiry ?? 0)} />
                 </ResultLabel>
-                <Badge variant={getExpiryVariant(result.daysUntilExpiry)}>
-                  {result.daysUntilExpiry} days
+                <Badge variant={getExpiryVariant(result.daysUntilExpiry ?? 0)}>
+                  {result.daysUntilExpiry ?? '—'} days
                 </Badge>
               </ResultItem>
               <ResultItem>
                 <ResultLabel>Subject</ResultLabel>
-                <ResultValue highlight>{result.subject}</ResultValue>
+                <ResultValue highlight>{result.subject ?? '—'}</ResultValue>
               </ResultItem>
               <ResultItem>
                 <ResultLabel>Issuer</ResultLabel>
-                <ResultValue>{result.issuer}</ResultValue>
+                <ResultValue>{result.issuer ?? '—'}</ResultValue>
               </ResultItem>
               <ResultItem>
                 <ResultLabel>Valid From</ResultLabel>
-                <ResultValue>{new Date(result.validFrom).toLocaleDateString()}</ResultValue>
+                <ResultValue>{result.validFrom ? new Date(result.validFrom).toLocaleDateString() : '—'}</ResultValue>
               </ResultItem>
               <ResultItem>
-                <ResultLabel>Valid To</ResultLabel>
-                <ResultValue>{new Date(result.validTo).toLocaleDateString()}</ResultValue>
+                <ResultLabel>Valid Until</ResultLabel>
+                <ResultValue>{result.validUntil ? new Date(result.validUntil).toLocaleDateString() : '—'}</ResultValue>
               </ResultItem>
               <ResultItem>
-                <ResultLabel>
-                  Certificate Version
-                  <SafeInfoTooltip interpret={() => interpretTlsVersion(result.version)} />
-                </ResultLabel>
-                <ResultValue>v{result.version}</ResultValue>
+                <ResultLabel>Protocol</ResultLabel>
+                <ResultValue>{result.protocol ?? '—'}</ResultValue>
               </ResultItem>
               <ResultItem>
-                <ResultLabel>
-                  Signature Algorithm
-                  <SafeInfoTooltip interpret={() => interpretSignatureAlgorithm(result.signatureAlgorithm)} />
-                </ResultLabel>
-                <ResultValue>{result.signatureAlgorithm}</ResultValue>
+                <ResultLabel>Cipher Suite</ResultLabel>
+                <ResultValue style={{ fontSize: '0.78rem' }}>{result.cipherSuite ?? '—'}</ResultValue>
               </ResultItem>
               <ResultItem>
                 <ResultLabel>Serial Number</ResultLabel>
-                <ResultValue style={{ fontSize: '0.75rem' }}>{result.serialNumber}</ResultValue>
+                <ResultValue style={{ fontSize: '0.75rem' }}>{result.serialNumber ?? '—'}</ResultValue>
               </ResultItem>
-              {result.subjectAlternativeNames.length > 0 && (
+              {result.subjectAlternativeNames && result.subjectAlternativeNames.length > 0 && (
                 <>
                   <ResultItem>
                     <ResultLabel>
                       SANs (Subject Alternative Names)
-                      <SafeInfoTooltip interpret={() => interpretSAN(result.subjectAlternativeNames.length)} />
+                      <SafeInfoTooltip interpret={() => interpretSAN(result.subjectAlternativeNames!.length)} />
                     </ResultLabel>
                     <ResultValue>{result.subjectAlternativeNames.length} total</ResultValue>
                   </ResultItem>
@@ -221,10 +213,10 @@ const TlsToolContent: React.FC = () => {
           )}
           <ResultActions
             toolKey={TOOL_KEY}
-            identifier={`${result.host}_${result.port}`}
+            identifier={`${result.host}_${port}`}
             data={result as unknown as Record<string, unknown>}
             shareValue={result.host}
-            shareExtra={String(result.port)}
+            shareExtra={port}
           />
         </ResultContainer>
       )}

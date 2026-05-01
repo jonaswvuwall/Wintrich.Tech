@@ -22,27 +22,30 @@ export interface DnsResponse {
 
 export interface HttpAnalysisResponse {
   url: string;
-  statusCode: number;
-  responseTime: number;
-  contentLength: number;
-  contentType: string;
-  headers: Record<string, string>;
-  redirectUrl: string | null;
+  status: number | null;
+  statusText: string | null;
+  responseTimeMs: number | null;
+  contentType: string | null;
+  server: string | null;
+  headers: Record<string, string> | null;
+  redirectChain: string[] | null;
+  finalUrl: string | null;
+  contentLength: number | null;
   error: string | null;
 }
 
 export interface TlsInfoResponse {
   host: string;
-  port: number;
-  issuer: string;
-  subject: string;
-  validFrom: string;
-  validTo: string;
-  daysUntilExpiry: number;
-  serialNumber: string;
-  signatureAlgorithm: string;
-  version: number;
-  subjectAlternativeNames: string[];
+  protocol: string | null;
+  cipherSuite: string | null;
+  issuer: string | null;
+  subject: string | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  daysUntilExpiry: number | null;
+  expired: boolean | null;
+  serialNumber: string | null;
+  subjectAlternativeNames: string[] | null;
   error: string | null;
 }
 

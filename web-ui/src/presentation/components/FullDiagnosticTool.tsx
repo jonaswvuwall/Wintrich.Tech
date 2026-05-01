@@ -213,7 +213,7 @@ const FullDiagnosticContent: React.FC = () => {
     if (!tls || tls.error) {
       updateCheck('tls', { state: 'fail', detail: tls?.error ?? 'No certificate' });
     } else {
-      const days = tls.daysUntilExpiry;
+      const days = tls.daysUntilExpiry ?? 0;
       const state: CheckState = days > 30 ? 'ok' : days > 7 ? 'warn' : 'fail';
       updateCheck('tls', { state, detail: `Expires in ${days} day(s)` });
     }
@@ -222,9 +222,9 @@ const FullDiagnosticContent: React.FC = () => {
     if (!http || http.error) {
       updateCheck('http', { state: 'fail', detail: http?.error ?? 'No response' });
     } else {
-      const code = http.statusCode;
+      const code = http.status ?? 0;
       const state: CheckState = code >= 200 && code < 400 ? 'ok' : code >= 400 && code < 500 ? 'warn' : 'fail';
-      updateCheck('http', { state, detail: `${code} · ${http.responseTime} ms` });
+      updateCheck('http', { state, detail: `${code} · ${http.responseTimeMs ?? '—'} ms` });
     }
 
     // Security
