@@ -34,7 +34,10 @@ public sealed class SecurityHeadersService(
         {
             var client = httpClientFactory.CreateClient("analysis");
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            // Send browser-like Accept headers so sites don't return a stripped-down response
+            // Send browser-like headers so sites don't return a stripped-down response
+            request.Headers.UserAgent.Clear();
+            request.Headers.TryAddWithoutValidation("User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
             request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
             request.Headers.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
 
