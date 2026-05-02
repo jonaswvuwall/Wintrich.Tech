@@ -317,51 +317,54 @@ export const About: React.FC = () => {
             <Logo size={120} />
           </AvatarWrap>
           <div>
-            <Name>Jonas <span>Wintrich</span></Name>
-            <Role>Full-stack developer · Network engineer</Role>
+            <Name>About <span>Wintrich.Tech</span></Name>
+            <Role>Free network diagnostics — no signup, no clutter</Role>
             <Bio>
-              I build robust network intelligence tools and full-stack applications.
-              Strong background in C#, ASP.NET Core, React and modern web tooling, with a focus on
-              clean architecture, security, and performance.
+              Wintrich.Tech is a fast, browser-based toolkit for checking how your
+              websites and servers behave on the public internet. Run a check, read
+              the result in plain language, share or export it — that's it.
             </Bio>
-            <Socials>
-              <Social
-                href="https://www.linkedin.com/in/jonas-wintrich-a31bb61ba/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                LinkedIn ↗
-              </Social>
-            </Socials>
           </div>
         </Hero>
 
         <SectionGrid>
           <Section $delay={0.1}>
-            <SectionTitle>Stack</SectionTitle>
+            <SectionTitle>What you can check</SectionTitle>
             <Skills>
-              <Skill>C#</Skill>
-              <Skill>ASP.NET Core</Skill>
-              <Skill>React</Skill>
-              <Skill>TypeScript</Skill>
-              <Skill>Node.js</Skill>
-              <Skill>PostgreSQL</Skill>
-              <Skill>Docker</Skill>
-              <Skill>REST · OpenAPI</Skill>
-              <Skill>Networking</Skill>
+              <Skill>Reachability (ping)</Skill>
+              <Skill>DNS records</Skill>
+              <Skill>HTTP response</Skill>
+              <Skill>TLS certificates</Skill>
+              <Skill>Security headers</Skill>
+              <Skill>Full diagnostic</Skill>
             </Skills>
           </Section>
 
           <Section $delay={0.2}>
-            <SectionTitle>About this project</SectionTitle>
+            <SectionTitle>Why use it</SectionTitle>
             <p style={{ color: theme.colors.textSecondary, lineHeight: 1.7 }}>
-              Wintrich.Tech is a free network diagnostics platform with six tools in one
-              dashboard: a one-click full diagnostic, connectivity check, DNS lookup, HTTP
-              analysis, TLS certificate inspector, and security-headers audit with an A+ to F
-              grade. Every result can be exported as JSON or CSV and shared via deep link —
-              no setup required.
+              Every result comes with a plain-language interpretation, so you don't
+              need to be a network engineer to act on it. Export results as JSON or
+              CSV, or share a deep link with a colleague — no account required.
             </p>
-            <ProjectCta to="/dashboard">Try the dashboard →</ProjectCta>
+            <ProjectCta to="/dashboard">Open the dashboard →</ProjectCta>
+          </Section>
+
+          <Section $delay={0.3}>
+            <SectionTitle>Who it's for</SectionTitle>
+            <p style={{ color: theme.colors.textSecondary, lineHeight: 1.7 }}>
+              Developers verifying a deployment, sysadmins triaging an outage, site
+              owners checking their SSL expiry, or anyone who needs a quick,
+              trustworthy answer about a domain.
+            </p>
+          </Section>
+
+          <Section $delay={0.4}>
+            <SectionTitle>Privacy</SectionTitle>
+            <p style={{ color: theme.colors.textSecondary, lineHeight: 1.7 }}>
+              No tracking, no ads, no accounts. Your queries are processed on demand
+              and not stored on our servers. History stays in your browser.
+            </p>
           </Section>
         </SectionGrid>
       </Wrap>

@@ -183,12 +183,11 @@ const MetaPill = styled.div<{ $color?: string }>`
 const Grid = styled.div`
   position: relative;
   z-index: 1;
-  width: min(1320px, 100%);
+  width: min(960px, 100%);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
-  align-items: stretch;
 
   > * {
     animation: ${fadeUp} 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -199,11 +198,6 @@ const Grid = styled.div`
   > *:nth-child(4) { animation-delay: 0.20s; }
   > *:nth-child(5) { animation-delay: 0.25s; }
   > *:nth-child(6) { animation-delay: 0.30s; }
-
-  /* Full Diagnostic spans the entire first row */
-  > *:first-child {
-    grid-column: 1 / -1;
-  }
 `;
 
 
