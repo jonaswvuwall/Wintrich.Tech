@@ -33,14 +33,25 @@ public sealed class SecurityHeadersService(
         try
         {
             var client = httpClientFactory.CreateClient("analysis");
-            using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            // Send browser-like Accept headers so sites don't return a stripped-down response
+            request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            request.Headers.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
+
+            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
             statusCode = (int)response.StatusCode;
+
+            // Merge response + content headers; tolerate duplicate keys (e.g. multiple Set-Cookie)
             headers = response.Headers
                 .Concat(response.Content.Headers)
+                .GroupBy(h => h.Key, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(
-                    h => h.Key.ToLowerInvariant(),
-                    h => string.Join(", ", h.Value),
+                    g => g.Key.ToLowerInvariant(),
+                    g => string.Join(", ", g.SelectMany(kv => kv.Value)),
                     StringComparer.OrdinalIgnoreCase);
+
+            logger.LogDebug("Received {Count} unique headers from {Url}: {Headers}",
+                headers.Count, url, string.Join(", ", headers.Keys));
         }
         catch (Exception ex)
         {
