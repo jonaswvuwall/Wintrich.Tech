@@ -1,20 +1,23 @@
+using System.Diagnostics;
 using System.Net;
-using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using Wintrich.NetworkApi.DTOs;
 
 namespace Wintrich.NetworkApi.Services;
 
 /// <summary>
-/// Connectivity and latency checks using System.Net.NetworkInformation.Ping.
-/// Equivalent of the Java ConnectivityService (system ping + DNS resolution).
+/// Connectivity and latency checks using TCP connect probes.
+/// (ICMP ping requires elevated privileges that aren't available in
+/// most container runtimes such as Render / Heroku.)
 /// </summary>
 public sealed class ConnectivityService(IConfiguration configuration, ILogger<ConnectivityService> logger)
 {
+    private static readonly int[] ProbePorts = [443, 80];
     private readonly int _pingTimeout = configuration.GetValue<int>("Api:Network:Timeout:Ping", 3000);
 
     public async Task<PingResponse> PingAsync(string host)
     {
-        logger.LogDebug("Performing ping check for host: {Host}", host);
+        logger.LogDebug("Performing TCP connectivity check for host: {Host}", host);
 
         string? ip = null;
         bool reachable = false;
@@ -23,25 +26,30 @@ public sealed class ConnectivityService(IConfiguration configuration, ILogger<Co
 
         try
         {
-            // Resolve IP address first (mirrors Java's InetAddress.getByName)
             var addresses = await Dns.GetHostAddressesAsync(host);
-            ip = addresses.FirstOrDefault()?.ToString();
+            var address = addresses.FirstOrDefault();
+            ip = address?.ToString();
 
-            // Use the .NET Ping class (maps directly to system ICMP ping)
-            using var ping = new Ping();
-            var reply = await ping.SendPingAsync(host, _pingTimeout);
+            if (address is null)
+            {
+                error = "Could not resolve host";
+            }
+            else
+            {
+                foreach (var port in ProbePorts)
+                {
+                    var (ok, ms) = await TryTcpConnectAsync(address, port, _pingTimeout);
+                    if (ok)
+                    {
+                        reachable = true;
+                        latencyMs = ms;
+                        break;
+                    }
+                }
 
-            reachable = reply.Status == IPStatus.Success;
-            latencyMs = reachable ? reply.RoundtripTime : null;
-
-            if (!reachable)
-                error = $"Host unreachable (status: {reply.Status})";
-        }
-        catch (PingException ex)
-        {
-            logger.LogError(ex, "Ping failed for host: {Host}", host);
-            reachable = false;
-            error = $"Ping failed: {ex.InnerException?.Message ?? ex.Message}";
+                if (!reachable)
+                    error = $"Host unreachable on TCP ports {string.Join(", ", ProbePorts)}";
+            }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -51,5 +59,22 @@ public sealed class ConnectivityService(IConfiguration configuration, ILogger<Co
         }
 
         return new PingResponse(host, ip, reachable, latencyMs, DateTime.UtcNow, error);
+    }
+
+    private static async Task<(bool ok, long ms)> TryTcpConnectAsync(IPAddress address, int port, int timeoutMs)
+    {
+        using var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        using var cts = new CancellationTokenSource(timeoutMs);
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            await socket.ConnectAsync(address, port, cts.Token);
+            sw.Stop();
+            return (true, sw.ElapsedMilliseconds);
+        }
+        catch
+        {
+            return (false, 0);
+        }
     }
 }
