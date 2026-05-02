@@ -180,36 +180,6 @@ const Bio = styled.p`
   max-width: 60ch;
 `;
 
-const Socials = styled.div`
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 1.4rem;
-  flex-wrap: wrap;
-
-  @media (max-width: 720px) { justify-content: center; }
-`;
-
-const Social = styled.a`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.95rem;
-  border-radius: 999px;
-  text-decoration: none;
-  color: ${theme.colors.text};
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid ${theme.colors.border};
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all ${theme.transitions.fast};
-
-  &:hover {
-    transform: translateY(-2px);
-    border-color: rgba(34, 211, 238, 0.5);
-    background: rgba(34, 211, 238, 0.08);
-  }
-`;
-
 const SectionGrid = styled.div`
   margin-top: 2rem;
   display: grid;
