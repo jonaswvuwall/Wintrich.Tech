@@ -141,18 +141,18 @@ export const Button = styled.button`
   transition: all ${theme.transitions.fast};
   box-shadow: 0 8px 24px rgba(34, 211, 238, 0.25);
   position: relative;
+  isolation: isolate;
   overflow: hidden;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: -1;
     background: linear-gradient(135deg, #A78BFA 0%, #22D3EE 100%);
     opacity: 0;
     transition: opacity ${theme.transitions.normal};
   }
-
-  > * { position: relative; z-index: 1; }
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);

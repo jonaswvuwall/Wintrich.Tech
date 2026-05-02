@@ -9,6 +9,70 @@ const fadeUp = keyframes`
   to   { opacity: 1; transform: translateY(0); }
 `;
 
+const slowSpin = keyframes`
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+`;
+
+const slowSpinReverse = keyframes`
+  to { transform: translate(-50%, -50%) rotate(-360deg); }
+`;
+
+const Backdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+`;
+
+const OrbitStage = styled.div`
+  position: absolute;
+  top: -20%;
+  right: -25%;
+  width: clamp(700px, 70vw, 1100px);
+  aspect-ratio: 1;
+  opacity: 0.55;
+
+  @media (max-width: 980px) {
+    top: -10%;
+    right: -45%;
+    opacity: 0.4;
+  }
+`;
+
+const Halo = styled.div`
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(34, 211, 238, 0.28), transparent 60%),
+    radial-gradient(circle at 70% 70%, rgba(167, 139, 250, 0.24), transparent 60%);
+  filter: blur(50px);
+`;
+
+const Ring = styled.div<{ $size: string; $duration: number; $reverse?: boolean }>`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: ${p => p.$size};
+  height: ${p => p.$size};
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.10);
+  transform: translate(-50%, -50%);
+  animation: ${p => p.$reverse ? slowSpinReverse : slowSpin} ${p => p.$duration}s linear infinite;
+`;
+
+const OrbitDot = styled.div<{ $color: string }>`
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${p => p.$color};
+  box-shadow: 0 0 16px ${p => p.$color};
+`;
+
 const Page = styled.div`
   position: relative;
   min-height: 100vh;
@@ -16,6 +80,8 @@ const Page = styled.div`
 `;
 
 const Wrap = styled.div`
+  position: relative;
+  z-index: 1;
   width: min(1100px, 100%);
   margin: 0 auto;
 `;
@@ -228,6 +294,21 @@ const ProjectCta = styled(Link)`
 export const About: React.FC = () => {
   return (
     <Page>
+      <Backdrop>
+        <OrbitStage>
+          <Halo />
+          <Ring $size="98%" $duration={60}>
+            <OrbitDot $color="#22D3EE" />
+          </Ring>
+          <Ring $size="78%" $duration={42} $reverse>
+            <OrbitDot $color="#A78BFA" />
+          </Ring>
+          <Ring $size="58%" $duration={28}>
+            <OrbitDot $color="#7C9CFF" />
+          </Ring>
+        </OrbitStage>
+      </Backdrop>
+
       <Wrap>
         <Back to="/">← Back home</Back>
 
