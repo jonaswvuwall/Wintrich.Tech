@@ -36,12 +36,17 @@ builder.Services.AddSwaggerGen(c =>
 // Memory cache (replaces Caffeine; used by DnsService and TlsService)
 builder.Services.AddMemoryCache();
 
-// CORS — allow all origins (matches @CrossOrigin(origins = "*") on the Java controller)
+// CORS — allow the production domain and localhost for development
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?? ["https://wintrich.tech", "https://www.wintrich.tech", "http://localhost:5173"];
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
         policy
-            .AllowAnyOrigin()
+            .WithOrigins(allowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .SetPreflightMaxAge(TimeSpan.FromHours(1)));
