@@ -183,8 +183,18 @@ const Bio = styled.p`
 const SectionGrid = styled.div`
   margin-top: 2rem;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.25rem;
+
+  /* Last section spans the full width for a clean 2 + 2 + 1 layout */
+  > *:last-child {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+    > *:last-child { grid-column: auto; }
+  }
 `;
 
 const Section = styled.section<{ $delay?: number }>`
