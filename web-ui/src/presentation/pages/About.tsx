@@ -336,6 +336,23 @@ export const About: React.FC = () => {
               and not stored on our servers. History stays in your browser.
             </p>
           </Section>
+
+          <Section $delay={0.5}>
+            <SectionTitle>Built by</SectionTitle>
+            <p style={{ color: theme.colors.textSecondary, lineHeight: 1.7 }}>
+              Wintrich.Tech is built and maintained by Jonas Wintrich — a
+              full-stack developer with a focus on clean architecture, design,
+              and performance.{' '}
+              <a
+                href="https://www.linkedin.com/in/jonas-wintrich-a31bb61ba/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: theme.colors.primary, textDecoration: 'none', fontWeight: 600 }}
+              >
+                Connect on LinkedIn ↗
+              </a>
+            </p>
+          </Section>
         </SectionGrid>
       </Wrap>
     </Page>
