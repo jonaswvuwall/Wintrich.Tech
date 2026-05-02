@@ -1,10 +1,9 @@
 services:
   - type: web
     name: wintrich-tech-api
-    env: dotnet
+    env: docker
     rootDir: web-api
-    buildCommand: dotnet publish -c Release -o out
-    startCommand: dotnet out/NetworkApi.dll
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: PORT
         value: 8080
