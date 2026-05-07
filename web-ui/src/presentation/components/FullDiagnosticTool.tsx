@@ -126,6 +126,36 @@ const Header = styled.div`
   }
 `;
 
+const ShareRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  font-size: 0.78rem;
+`;
+
+const ShareButton = styled.button`
+  padding: 0.45rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: ${theme.colors.text};
+  background: ${theme.gradients.brandSoft};
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background ${theme.transitions.fast};
+  &:hover:not(:disabled) { background: rgba(34, 211, 238, 0.18); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
+const ShareLink = styled.a`
+  color: ${theme.colors.primary};
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+`;
+
 const stateGlyph = (s: CheckState): string => {
   switch (s) {
     case 'ok': return '✓';
@@ -141,6 +171,9 @@ const FullDiagnosticContent: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<FullReport | null>(null);
   const [checks, setChecks] = useState<CheckResult[]>([]);
+  const [sharing, setSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
   const { entries, add, clear } = useToolHistory(TOOL_KEY);
   const [searchParams] = useSearchParams();
   const autoRanRef = useRef(false);
@@ -306,12 +339,44 @@ const FullDiagnosticContent: React.FC = () => {
             ))}
           </Grid>
           {report && (
-            <ResultActions
-              toolKey={TOOL_KEY}
-              identifier={report.host}
-              data={report as unknown as Record<string, unknown>}
-              shareValue={report.host}
-            />
+            <>
+              <ShareRow>
+                <ShareButton
+                  type="button"
+                  disabled={sharing}
+                  onClick={async () => {
+                    setSharing(true);
+                    setShareUrl(null);
+                    setShareError(null);
+                    try {
+                      const full = await networkApi.fullReport(report.host);
+                      const shared = await networkApi.shareReport(full);
+                      const url = `${window.location.origin}/r/${shared.id}`;
+                      setShareUrl(url);
+                      try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+                    } catch (e) {
+                      setShareError(e instanceof Error ? e.message : 'Could not create permalink');
+                    } finally {
+                      setSharing(false);
+                    }
+                  }}
+                >
+                  {sharing ? 'Generating permalink…' : 'Share as permalink'}
+                </ShareButton>
+                {shareUrl && (
+                  <ShareLink href={shareUrl} target="_blank" rel="noopener noreferrer">
+                    {shareUrl} (copied)
+                  </ShareLink>
+                )}
+                {shareError && <span style={{ color: theme.colors.error, fontSize: '0.78rem' }}>{shareError}</span>}
+              </ShareRow>
+              <ResultActions
+                toolKey={TOOL_KEY}
+                identifier={report.host}
+                data={report as unknown as Record<string, unknown>}
+                shareValue={report.host}
+              />
+            </>
           )}
         </ResultContainer>
       )}

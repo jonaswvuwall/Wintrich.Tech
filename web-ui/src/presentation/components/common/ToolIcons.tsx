@@ -57,3 +57,25 @@ export const BoltIcon: React.FC = () => (
     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
   </svg>
 );
+
+export const MailIcon: React.FC = () => (
+  <svg {...base}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="m3 7 9 6 9-6" />
+  </svg>
+);
+
+export const InfoIcon: React.FC = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 8v.01" />
+    <path d="M11 12h1v4h1" />
+  </svg>
+);
+
+export const BellIcon: React.FC = () => (
+  <svg {...base}>
+    <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+    <path d="M10 21a2 2 0 0 0 4 0" />
+  </svg>
+);

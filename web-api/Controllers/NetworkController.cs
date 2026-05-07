@@ -22,6 +22,9 @@ public sealed class NetworkController(
     HttpAnalysisService httpAnalysisService,
     TlsService tlsService,
     SecurityHeadersService securityHeadersService,
+    EmailAuthService emailAuthService,
+    WhoisService whoisService,
+    FullReportService fullReportService,
     UrlValidator urlValidator,
     ILogger<NetworkController> logger) : ControllerBase
 {
@@ -107,6 +110,57 @@ public sealed class NetworkController(
         urlValidator.ValidateUrl(url.Trim());
 
         var response = await securityHeadersService.AuditAsync(url.Trim());
+        return Ok(response);
+    }
+
+    /// <summary>Audit SPF, DMARC and DKIM for a domain by inspecting DNS TXT records.</summary>
+    [HttpGet("email-auth")]
+    [ProducesResponseType<EmailAuthResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> EmailAuth([FromQuery] string? domain)
+    {
+        if (string.IsNullOrWhiteSpace(domain))
+            return BadRequest(new { error = "domain query parameter is required" });
+
+        logger.LogInformation("Email-auth request for domain: {Domain}", domain);
+        urlValidator.ValidateHost(domain.Trim());
+
+        var response = await emailAuthService.AuditAsync(domain.Trim());
+        return Ok(response);
+    }
+
+    /// <summary>Look up WHOIS / RDAP information (registrar, creation date, expiry, name servers).</summary>
+    [HttpGet("whois")]
+    [ProducesResponseType<WhoisResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Whois([FromQuery] string? domain)
+    {
+        if (string.IsNullOrWhiteSpace(domain))
+            return BadRequest(new { error = "domain query parameter is required" });
+
+        logger.LogInformation("WHOIS request for domain: {Domain}", domain);
+        urlValidator.ValidateHost(domain.Trim());
+
+        var response = await whoisService.LookupAsync(domain.Trim());
+        return Ok(response);
+    }
+
+    /// <summary>Run every probe in parallel and return a single graded report.</summary>
+    [HttpGet("full-report")]
+    [ProducesResponseType<FullReportResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> FullReport([FromQuery] string? host)
+    {
+        if (string.IsNullOrWhiteSpace(host))
+            return BadRequest(new { error = "host query parameter is required" });
+
+        logger.LogInformation("Full report request for host: {Host}", host);
+        urlValidator.ValidateHost(host.Trim());
+
+        var response = await fullReportService.RunAsync(host.Trim());
         return Ok(response);
     }
 }

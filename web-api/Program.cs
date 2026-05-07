@@ -77,6 +77,17 @@ builder.Services.AddScoped<DnsService>();
 builder.Services.AddScoped<HttpAnalysisService>();
 builder.Services.AddScoped<TlsService>();
 builder.Services.AddScoped<SecurityHeadersService>();
+builder.Services.AddScoped<EmailAuthService>();
+builder.Services.AddSingleton<WhoisService>();
+builder.Services.AddScoped<FullReportService>();
+
+// Persistent stores (file-based, no DB)
+builder.Services.AddSingleton<ReportStore>();
+builder.Services.AddSingleton<MonitorStore>();
+builder.Services.AddSingleton<EmailNotifier>();
+
+// Background monitor — runs registered checks every Monitors:IntervalMinutes
+builder.Services.AddHostedService<MonitorBackgroundService>();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Port binding — reads PORT env var (Render/Railway) or defaults to 8080
