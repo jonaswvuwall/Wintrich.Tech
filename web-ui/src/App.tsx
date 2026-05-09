@@ -5,6 +5,7 @@ import { About } from './presentation/pages/About';
 import { Traceroute } from './presentation/pages/Traceroute';
 import { AnycastAtlas } from './presentation/pages/AnycastAtlas';
 import { TlsHandshake } from './presentation/pages/TlsHandshake';
+import { Globe } from './presentation/pages/Globe';
 import { SharedReportPage } from './presentation/pages/SharedReportPage';
 import { Navigation } from './presentation/components/Navigation';
 import { GlobalStyles } from './presentation/styles/GlobalStyles';
@@ -17,7 +18,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/visualize" element={<Navigate to="/visualize/traceroute" replace />} />
+        <Route path="/visualize" element={<Navigate to="/visualize/globe" replace />} />
+        <Route path="/visualize/globe" element={<Globe />} />
         <Route path="/visualize/traceroute" element={<Traceroute />} />
         <Route path="/visualize/anycast" element={<AnycastAtlas />} />
         <Route path="/visualize/tls" element={<TlsHandshake />} />

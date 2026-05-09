@@ -63,10 +63,14 @@ const AtlasIco = () => (
 const TlsIco = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
 );
+const GlobeIco = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="4"/><path d="M12 3v18"/></svg>
+);
 
 export const VisualizeTabs: React.FC = () => (
   <Wrap aria-label="Visualization picker">
-    <Tab to="/visualize/traceroute" end><TraceIco /><span className="lbl">Traceroute</span></Tab>
+    <Tab to="/visualize/globe"><GlobeIco /><span className="lbl">Globe</span></Tab>
+    <Tab to="/visualize/traceroute" end><TraceIco /><span className="lbl">Trace</span></Tab>
     <Tab to="/visualize/anycast"><AtlasIco /><span className="lbl">Anycast</span></Tab>
     <Tab to="/visualize/tls"><TlsIco /><span className="lbl">TLS</span></Tab>
   </Wrap>
