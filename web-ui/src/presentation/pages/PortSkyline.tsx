@@ -296,23 +296,70 @@ const Scene: React.FC<{
         />
       ))}
 
-      <CinematicCamera />
+      <CinematicCamera towers={towers} loading={loading} />
     </>
   );
 };
 
-/* Slow cinematic orbit — keeps the city feeling alive without giving the user controls.
-   Camera traces a gentle circular path around the skyline at a fixed elevation. */
-const CinematicCamera: React.FC = () => {
+/* Camera behaviour:
+   • While scanning   → slow cinematic orbit around the city (feels alive).
+   • After results    → smoothly ease to a static framing that fits every tower
+                         in view, then hold rock-still so users can read it.
+   • Idle / no towers → gentle hold at a default vantage point. */
+const CinematicCamera: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ towers, loading }) => {
   const { camera } = useThree();
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime * 0.05;            // very slow orbit
-    const radius = 9.5;
-    const sway = Math.sin(t * 0.7) * 1.2;          // subtle horizontal drift
-    camera.position.x = Math.sin(t) * radius * 0.35 + sway;
-    camera.position.y = 4 + Math.sin(t * 0.5) * 0.4; // gentle bob
-    camera.position.z = Math.cos(t) * radius * 0.7 + 6.5;
-    camera.lookAt(0, 0.6, 0);
+
+  // Compute a static framing position that comfortably contains all towers.
+  const framing = useMemo(() => {
+    if (towers.length === 0) {
+      return { pos: [0, 4, 9] as [number, number, number], look: [0, 0.6, 0] as [number, number, number] };
+    }
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, maxY = 0;
+    for (const t of towers) {
+      const [x, , z] = t.position;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (z < minZ) minZ = z;
+      if (z > maxZ) maxZ = z;
+      if (t.height > maxY) maxY = t.height;
+    }
+    const cx = (minX + maxX) / 2;
+    const cz = (minZ + maxZ) / 2;
+    const spanX = Math.max(maxX - minX, 4);
+    const spanZ = Math.max(maxZ - minZ, 4);
+    // Distance scaled so the wider of the two spans fits with margin.
+    const dist = Math.max(spanX * 0.85, spanZ * 1.2, 8);
+    const height = Math.max(maxY * 0.55 + 3.2, 4.2);
+    return {
+      pos: [cx, height, cz + dist] as [number, number, number],
+      look: [cx, Math.min(maxY * 0.35, 1.2), cz] as [number, number, number],
+    };
+  }, [towers]);
+
+  const lookTarget = useRef(new THREE.Vector3(...framing.look));
+
+  useFrame(({ clock }, delta) => {
+    if (loading) {
+      // Cinematic orbit while scanning.
+      const t = clock.elapsedTime * 0.18;
+      const radius = 9.5;
+      const sway = Math.sin(t * 0.7) * 1.2;
+      camera.position.x = Math.sin(t) * radius * 0.35 + sway;
+      camera.position.y = 4 + Math.sin(t * 0.5) * 0.4;
+      camera.position.z = Math.cos(t) * radius * 0.7 + 6.5;
+      lookTarget.current.set(0, 0.6, 0);
+      camera.lookAt(lookTarget.current);
+      return;
+    }
+    // Ease to the static framing position. Frame-rate independent lerp.
+    const k = 1 - Math.pow(0.001, delta); // ~99% of the way in 1 second
+    camera.position.x += (framing.pos[0] - camera.position.x) * k;
+    camera.position.y += (framing.pos[1] - camera.position.y) * k;
+    camera.position.z += (framing.pos[2] - camera.position.z) * k;
+    lookTarget.current.x += (framing.look[0] - lookTarget.current.x) * k;
+    lookTarget.current.y += (framing.look[1] - lookTarget.current.y) * k;
+    lookTarget.current.z += (framing.look[2] - lookTarget.current.z) * k;
+    camera.lookAt(lookTarget.current);
   });
   return null;
 };
