@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Text } from '@react-three/drei';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { networkApi, type PortScanResponse, type PortScanResult } from '../../infrastructure/api/networkApi';
 import { theme } from '../styles/theme';
@@ -296,17 +296,25 @@ const Scene: React.FC<{
         />
       ))}
 
-      <OrbitControls
-        enablePan
-        enableDamping
-        dampingFactor={0.08}
-        minDistance={4}
-        maxDistance={28}
-        maxPolarAngle={Math.PI / 2 - 0.05}
-        target={[0, 0.5, 0]}
-      />
+      <CinematicCamera />
     </>
   );
+};
+
+/* Slow cinematic orbit — keeps the city feeling alive without giving the user controls.
+   Camera traces a gentle circular path around the skyline at a fixed elevation. */
+const CinematicCamera: React.FC = () => {
+  const { camera } = useThree();
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime * 0.05;            // very slow orbit
+    const radius = 9.5;
+    const sway = Math.sin(t * 0.7) * 1.2;          // subtle horizontal drift
+    camera.position.x = Math.sin(t) * radius * 0.35 + sway;
+    camera.position.y = 4 + Math.sin(t * 0.5) * 0.4; // gentle bob
+    camera.position.z = Math.cos(t) * radius * 0.7 + 6.5;
+    camera.lookAt(0, 0.6, 0);
+  });
+  return null;
 };
 
 /* ─────────────────────────────────────────────────────────────────
@@ -608,7 +616,7 @@ export const PortSkyline: React.FC = () => {
 
       {!result && !loading && (
         <Hint>
-          Enter a host above to <b>scan ~150 common service ports</b> · open ports rise as towers · drag to orbit
+          Enter a host above to <b>scan ~150 common service ports</b> · open ports rise as towers · hover for details
         </Hint>
       )}
 

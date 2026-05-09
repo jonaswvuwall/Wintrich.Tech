@@ -73,7 +73,7 @@ const SkylineIco = () => (
 export const VisualizeTabs: React.FC = () => (
   <Wrap aria-label="Visualization picker">
     <Tab to="/visualize/globe"><GlobeIco /><span className="lbl">Globe</span></Tab>
-    <Tab to="/visualize/skyline"><SkylineIco /><span className="lbl">Skyline</span></Tab>
+    <Tab to="/visualize/skyline"><SkylineIco /><span className="lbl">Ports</span></Tab>
     <Tab to="/visualize/traceroute" end><TraceIco /><span className="lbl">Trace</span></Tab>
     <Tab to="/visualize/anycast"><AtlasIco /><span className="lbl">Anycast</span></Tab>
     <Tab to="/visualize/tls"><TlsIco /><span className="lbl">TLS</span></Tab>
