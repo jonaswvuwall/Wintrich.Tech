@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Text, Billboard } from '@react-three/drei';
+import { Text, Billboard, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { networkApi, type PortScanResponse, type PortScanResult } from '../../infrastructure/api/networkApi';
 import { theme } from '../styles/theme';
@@ -137,94 +137,122 @@ const RingFloor: React.FC<{ radius: number }> = ({ radius }) => {
   );
 };
 
-/* Active scanning visualisation:
-   • rotating beam fan (radar dish)
-   • three expanding ground ring pulses (sonar)
-   • particle probes flying outward in golden-angle pattern (network packets) */
+/* Professional scan visualisation — quiet, restrained, technical:
+   • single thin sweep line with a soft trailing gradient (radar)
+   • two faint expanding sonar rings
+   • occasional discrete "contact" pings at random points on the ring  */
 const ScanRadar: React.FC<{ radius: number }> = ({ radius }) => {
-  const beamRef   = useRef<THREE.Group>(null);
-  const ring1Ref  = useRef<THREE.Mesh>(null);
-  const ring2Ref  = useRef<THREE.Mesh>(null);
-  const ring3Ref  = useRef<THREE.Mesh>(null);
-  const probesRef = useRef<THREE.Group>(null);
-  const PROBE_COUNT = 48;
-  const reach = radius + 1.5;
+  const sweepRef = useRef<THREE.Group>(null);
+  const ring1Ref = useRef<THREE.Mesh>(null);
+  const ring2Ref = useRef<THREE.Mesh>(null);
+  const reach = radius + 1.4;
+  const PING_COUNT = 8;
+  const pings = useRef(
+    Array.from({ length: PING_COUNT }).map(() => ({
+      angle: Math.random() * Math.PI * 2,
+      next:  Math.random() * 1.5,
+    })),
+  );
+  const pingRefs = useRef<(THREE.Mesh | null)[]>([]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
-    if (beamRef.current) beamRef.current.rotation.y = t * 1.6;
+    if (sweepRef.current) sweepRef.current.rotation.y = t * 0.9;
 
     const animateRing = (m: THREE.Mesh | null, offset: number) => {
       if (!m) return;
-      const cycle = 1.8;
+      const cycle = 3.2;
       const phase = ((t + offset) % cycle) / cycle;
-      const s = 0.2 + phase * (reach * 1.8);
+      const s = 0.15 + phase * (reach * 1.6);
       m.scale.set(s, s, s);
       const mat = m.material as THREE.MeshBasicMaterial;
-      mat.opacity = (1 - phase) * 0.75;
+      mat.opacity = (1 - phase) * 0.35;
     };
     animateRing(ring1Ref.current, 0);
-    animateRing(ring2Ref.current, 0.6);
-    animateRing(ring3Ref.current, 1.2);
+    animateRing(ring2Ref.current, 1.6);
 
-    if (probesRef.current) {
-      const kids = probesRef.current.children;
-      for (let i = 0; i < kids.length; i++) {
-        const cycle = 1.6;
-        const offset = (i / kids.length) * cycle;
-        const p = ((t + offset) % cycle) / cycle;
-        const angle = i * 2.39996; // golden angle for even spread
-        const r = p * reach;
-        const c = kids[i] as THREE.Mesh;
-        c.position.set(Math.cos(angle) * r, 0.18 + Math.sin(p * Math.PI) * 0.5, Math.sin(angle) * r);
-        const mat = c.material as THREE.MeshBasicMaterial;
-        mat.opacity = (1 - p) * 0.95;
+    // Discrete ping contacts — short flashes at fixed positions on the ring.
+    for (let i = 0; i < PING_COUNT; i++) {
+      const p = pings.current[i];
+      const node = pingRefs.current[i];
+      if (!node) continue;
+      const age = t - p.next;
+      if (age < 0) {
+        (node.material as THREE.MeshBasicMaterial).opacity = 0;
+        continue;
+      }
+      if (age > 0.9) {
+        p.next  = t + 0.6 + Math.random() * 2.2;
+        p.angle = Math.random() * Math.PI * 2;
+        node.position.set(Math.cos(p.angle) * reach, 0.04, Math.sin(p.angle) * reach);
+      } else {
+        const k = age / 0.9;
+        const scl = 0.12 + k * 0.45;
+        node.scale.set(scl, scl, scl);
+        (node.material as THREE.MeshBasicMaterial).opacity = (1 - k) * 0.85;
       }
     }
   });
 
   return (
     <group>
-      {/* Central scanner pillar */}
-      <mesh position={[0, 0.55, 0]}>
-        <cylinderGeometry args={[0.09, 0.14, 1.1, 20]} />
-        <meshStandardMaterial color="#22D3EE" emissive="#22D3EE" emissiveIntensity={1.6} toneMapped={false} />
+      {/* Flat scanner console on the ground */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <ringGeometry args={[0.18, 0.32, 48]} />
+        <meshBasicMaterial color="#22D3EE" transparent opacity={0.55} side={THREE.DoubleSide} toneMapped={false} />
       </mesh>
-      <mesh position={[0, 1.18, 0]}>
-        <sphereGeometry args={[0.18, 24, 24]} />
-        <meshStandardMaterial color="#A78BFA" emissive="#A78BFA" emissiveIntensity={2.2} toneMapped={false} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.011, 0]}>
+        <circleGeometry args={[0.18, 32]} />
+        <meshBasicMaterial color="#0A1A2E" toneMapped={false} />
       </mesh>
-      <pointLight position={[0, 1.2, 0]} intensity={2.4} distance={radius * 2 + 4} color="#22D3EE" />
+      <pointLight position={[0, 0.6, 0]} intensity={0.9} distance={radius * 2.5} color="#22D3EE" />
 
-      {/* Rotating sweep fan */}
-      <group ref={beamRef} position={[0, 0.4, 0]}>
+      {/* Thin sweep line + soft fading wedge behind it */}
+      <group ref={sweepRef} position={[0, 0.02, 0]}>
         <mesh position={[reach / 2, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.3, reach, 48, 1, 0, Math.PI / 5]} />
-          <meshBasicMaterial color="#22D3EE" transparent opacity={0.28} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+          <ringGeometry args={[0.18, reach, 64, 1, 0, Math.PI / 4]} />
+          <meshBasicMaterial
+            color="#22D3EE"
+            transparent
+            opacity={0.08}
+            side={THREE.DoubleSide}
+            toneMapped={false}
+            depthWrite={false}
+          />
         </mesh>
-        <mesh position={[reach / 2, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.3, reach, 48, 1, 0, Math.PI / 18]} />
-          <meshBasicMaterial color="#A78BFA" transparent opacity={0.85} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+        <mesh position={[reach / 2, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.18, reach, 64, 1, 0, 0.012]} />
+          <meshBasicMaterial
+            color="#7DE7F5"
+            transparent
+            opacity={0.95}
+            side={THREE.DoubleSide}
+            toneMapped={false}
+            depthWrite={false}
+          />
         </mesh>
       </group>
 
-      {/* Expanding ground rings */}
-      {[ring1Ref, ring2Ref, ring3Ref].map((ref, i) => (
-        <mesh key={i} ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, 0]}>
-          <ringGeometry args={[0.5, 0.56, 64]} />
-          <meshBasicMaterial color="#22D3EE" transparent opacity={0.7} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+      {/* Two slow expanding sonar rings */}
+      {[ring1Ref, ring2Ref].map((ref, i) => (
+        <mesh key={i} ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.022, 0]}>
+          <ringGeometry args={[0.5, 0.515, 96]} />
+          <meshBasicMaterial color="#22D3EE" transparent opacity={0.3} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
         </mesh>
       ))}
 
-      {/* Outbound probe packets */}
-      <group ref={probesRef}>
-        {Array.from({ length: PROBE_COUNT }).map((_, i) => (
-          <mesh key={i}>
-            <sphereGeometry args={[0.055, 8, 8]} />
-            <meshBasicMaterial color={i % 4 === 0 ? '#A78BFA' : '#22D3EE'} transparent opacity={0.9} toneMapped={false} />
-          </mesh>
-        ))}
-      </group>
+      {/* Discrete "contact" pings on the perimeter */}
+      {Array.from({ length: PING_COUNT }).map((_, i) => (
+        <mesh
+          key={i}
+          ref={(el) => { pingRefs.current[i] = el; }}
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[Math.cos(pings.current[i].angle) * reach, 0.04, Math.sin(pings.current[i].angle) * reach]}
+        >
+          <ringGeometry args={[0.04, 0.07, 24]} />
+          <meshBasicMaterial color="#7DE7F5" transparent opacity={0} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+        </mesh>
+      ))}
     </group>
   );
 };
@@ -353,25 +381,27 @@ const Scene: React.FC<{
         />
       ))}
 
-      <CinematicCamera towers={towers} loading={loading} />
+      <CameraRig towers={towers} loading={loading} />
     </>
   );
 };
 
-/* Camera behaviour:
-   • Scanning           → cinematic orbit around the radar (energy & motion)
-   • Results in         → ease to a static framing that fits every tower
-                          (viewport-aware: portrait pulls the camera back further)
-   • Idle / no towers   → default vantage  */
-const CinematicCamera: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ towers, loading }) => {
+/* Camera + controls behaviour:
+   \u2022 OrbitControls always active so users can drag/pinch to look around.
+   \u2022 While scanning, controls.autoRotate gives a slow showroom rotation.
+   \u2022 When fresh results land we animate the orbit distance / height once to
+     frame all towers (viewport-aware), then hand back full control to the user. */
+const CameraRig: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ towers, loading }) => {
   const { camera, size } = useThree();
+  const controlsRef = useRef<React.ComponentRef<typeof OrbitControls>>(null);
   const isPortrait = size.height > size.width;
 
-  const framing = useMemo(() => {
+  const target = useMemo(() => {
     if (towers.length === 0) {
       return {
-        pos:  [0, 4.5, isPortrait ? 13 : 9] as [number, number, number],
-        look: [0, 0.6, 0] as [number, number, number],
+        dist:   isPortrait ? 13 : 9,
+        height: 4.5,
+        look:   new THREE.Vector3(0, 0.6, 0),
       };
     }
     let maxR = 0, maxY = 0;
@@ -380,40 +410,66 @@ const CinematicCamera: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ 
       if (r > maxR) maxR = r;
       if (t.height > maxY) maxY = t.height;
     }
-    // Distance scaled to fit ring; portrait needs ~1.6x extra pull-back.
-    const baseDist = maxR + 3.5;
-    const dist = baseDist * (isPortrait ? 1.95 : 1.35);
+    const dist   = (maxR + 3.5) * (isPortrait ? 1.95 : 1.35);
     const height = Math.max(maxY * 0.7 + 3.5, maxR * 0.85);
     return {
-      pos:  [0, height, dist] as [number, number, number],
-      look: [0, Math.min(maxY * 0.45, 1.2), 0] as [number, number, number],
+      dist,
+      height,
+      look: new THREE.Vector3(0, Math.min(maxY * 0.45, 1.2), 0),
     };
   }, [towers, isPortrait]);
 
-  const lookTarget = useRef(new THREE.Vector3(...framing.look));
+  // Trigger a re-frame each time a scan completes (loading: true \u2192 false with towers).
+  const wasLoading = useRef(false);
+  const animateRef = useRef(false);
+  useEffect(() => {
+    if (wasLoading.current && !loading && towers.length > 0) animateRef.current = true;
+    wasLoading.current = loading;
+  }, [loading, towers.length]);
 
-  useFrame(({ clock }, delta) => {
-    if (loading) {
-      const t = clock.elapsedTime * 0.28;
-      const radius = isPortrait ? 12 : 9.5;
-      camera.position.x = Math.sin(t) * radius * 0.55;
-      camera.position.y = 4.5 + Math.sin(t * 0.5) * 0.5;
-      camera.position.z = Math.cos(t) * radius * 0.75 + 1.5;
-      lookTarget.current.set(0, 0.6, 0);
-      camera.lookAt(lookTarget.current);
-      return;
+  useFrame((_, delta) => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    // Animate camera + target once after each scan completes.
+    if (animateRef.current) {
+      const k = 1 - Math.pow(0.001, delta);
+      // Move target.
+      controls.target.x += (target.look.x - controls.target.x) * k;
+      controls.target.y += (target.look.y - controls.target.y) * k;
+      controls.target.z += (target.look.z - controls.target.z) * k;
+      // Desired camera position: same azimuth as current, recomputed for new dist/height.
+      const dx = camera.position.x - controls.target.x;
+      const dz = camera.position.z - controls.target.z;
+      const az = Math.atan2(dx, dz);
+      const dx2 = Math.sin(az) * target.dist;
+      const dz2 = Math.cos(az) * target.dist;
+      camera.position.x += (controls.target.x + dx2 - camera.position.x) * k;
+      camera.position.z += (controls.target.z + dz2 - camera.position.z) * k;
+      camera.position.y += (target.height       - camera.position.y) * k;
+      // Stop animating when close enough.
+      const remaining = Math.abs(target.height - camera.position.y)
+        + Math.abs(target.look.x - controls.target.x);
+      if (remaining < 0.02) animateRef.current = false;
     }
-    // Smoothly ease into static framing then hold.
-    const k = 1 - Math.pow(0.001, delta); // ~99% of the way per second
-    camera.position.x += (framing.pos[0] - camera.position.x) * k;
-    camera.position.y += (framing.pos[1] - camera.position.y) * k;
-    camera.position.z += (framing.pos[2] - camera.position.z) * k;
-    lookTarget.current.x += (framing.look[0] - lookTarget.current.x) * k;
-    lookTarget.current.y += (framing.look[1] - lookTarget.current.y) * k;
-    lookTarget.current.z += (framing.look[2] - lookTarget.current.z) * k;
-    camera.lookAt(lookTarget.current);
   });
-  return null;
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      enablePan={false}
+      enableDamping
+      dampingFactor={0.08}
+      minDistance={4}
+      maxDistance={40}
+      minPolarAngle={0.25}
+      maxPolarAngle={Math.PI / 2 - 0.05}
+      autoRotate={loading}
+      autoRotateSpeed={0.6}
+      rotateSpeed={0.7}
+      zoomSpeed={0.8}
+      makeDefault
+    />
+  );
 };
 
 /* ─────────────────────────────────────────────────────────────────
@@ -715,7 +771,7 @@ export const PortSkyline: React.FC = () => {
 
       {!result && !loading && (
         <Hint>
-          Enter a host above to <b>scan ~150 common service ports</b> · open ports rise as towers · hover for details
+          Enter a host above to <b>scan ~150 common service ports</b> · drag to rotate · scroll / pinch to zoom
         </Hint>
       )}
 

@@ -317,6 +317,9 @@ export const About: React.FC = () => {
               <Skill>TLS certificates</Skill>
               <Skill>Security headers</Skill>
               <Skill>Full diagnostic</Skill>
+              <Skill>3D visualizations</Skill>
+              <Skill>Port skyline</Skill>
+              <Skill>Traceroute & anycast maps</Skill>
             </Skills>
           </Section>
 
@@ -328,6 +331,7 @@ export const About: React.FC = () => {
               CSV, or share a deep link with a colleague — no account required.
             </p>
             <ProjectCta to="/dashboard">Open the dashboard →</ProjectCta>
+            <ProjectCta to="/visualize" style={{ marginLeft: '0.5rem' }}>Open visualizer →</ProjectCta>
           </Section>
 
           <Section $delay={0.3}>

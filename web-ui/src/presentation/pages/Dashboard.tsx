@@ -1,5 +1,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
+import { Link } from 'react-router-dom';
 import { PingTool } from '../components/PingTool';
 import { DnsTool } from '../components/DnsTool';
 import { HttpTool } from '../components/HttpTool';
@@ -202,7 +203,6 @@ const Grid = styled.div`
   > *:nth-child(6) { animation-delay: 0.30s; }
 `;
 
-
 const Footer = styled.footer`
   position: relative;
   z-index: 1;
@@ -216,6 +216,63 @@ const Footer = styled.footer`
   gap: 0.5rem;
   color: ${theme.colors.textMuted};
   font-size: 0.82rem;
+`;
+
+const VisualizeBanner = styled(Link)`
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: min(960px, 100%);
+  margin: 0 auto 1.5rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+  background:
+    radial-gradient(ellipse at top right, rgba(167,139,250,0.18), transparent 60%),
+    linear-gradient(135deg, rgba(34,211,238,0.10), rgba(167,139,250,0.10));
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  animation: ${fadeUp} 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: all ${theme.transitions.normal};
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: #A78BFA;
+    box-shadow: 0 16px 40px rgba(167, 139, 250, 0.22);
+  }
+
+  .icon {
+    flex: 0 0 auto;
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    background: rgba(167, 139, 250, 0.18);
+    border: 1px solid rgba(167, 139, 250, 0.45);
+    color: #A78BFA;
+  }
+  .body { flex: 1 1 auto; min-width: 0; }
+  .title {
+    font-size: 1rem; font-weight: 600;
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    margin-bottom: 0.2rem;
+  }
+  .badge {
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0.16rem 0.45rem; border-radius: 999px;
+    background: linear-gradient(135deg, #22D3EE, #A78BFA); color: #06070C;
+  }
+  .desc { font-size: 0.85rem; color: ${theme.colors.textSecondary}; line-height: 1.45; }
+  .arrow { font-size: 1.2rem; color: ${theme.colors.textMuted}; flex-shrink: 0; }
+
+  @media (max-width: 560px) {
+    padding: 0.9rem 1rem; gap: 0.75rem;
+    .icon { width: 40px; height: 40px; }
+    .desc { font-size: 0.78rem; }
+    .arrow { display: none; }
+  }
 `;
 
 export const Dashboard: React.FC = () => {
@@ -251,6 +308,21 @@ export const Dashboard: React.FC = () => {
           <MetaPill $color={theme.colors.primary}><b>8</b> tools active</MetaPill>
         </TopMeta>
       </Header>
+
+      <VisualizeBanner to="/visualize">
+        <span className="icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <ellipse cx="12" cy="12" rx="9" ry="4" />
+            <ellipse cx="12" cy="12" rx="4" ry="9" />
+          </svg>
+        </span>
+        <span className="body">
+          <span className="title">Network Visualizer <span className="badge">New</span></span>
+          <span className="desc">Spin a 3D globe, walk a port skyline, follow traceroute on a world map, scan an anycast atlas, watch TLS handshakes — mixed 2D & 3D scenes.</span>
+        </span>
+        <span className="arrow">→</span>
+      </VisualizeBanner>
 
       <Grid>
         <FullDiagnosticTool />

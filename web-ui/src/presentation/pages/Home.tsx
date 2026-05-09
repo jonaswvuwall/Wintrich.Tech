@@ -347,26 +347,73 @@ const Feature = styled.div`
   > * { position: relative; z-index: 1; }
 `;
 
-const FIcon = styled.div`
+const FIcon = styled.div<{ $accent?: boolean }>`
   width: 42px; height: 42px;
   border-radius: 12px;
   display: grid; place-items: center;
-  background: rgba(34, 211, 238, 0.1);
-  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: ${p => p.$accent ? 'rgba(167, 139, 250, 0.15)' : 'rgba(34, 211, 238, 0.1)'};
+  border: 1px solid ${p => p.$accent ? 'rgba(167, 139, 250, 0.4)' : 'rgba(34, 211, 238, 0.25)'};
   margin-bottom: 1rem;
-  color: ${theme.colors.primary};
+  color: ${p => p.$accent ? '#A78BFA' : theme.colors.primary};
 `;
 
 const FTitle = styled.h3`
   font-size: 1.05rem;
   font-weight: 600;
   margin-bottom: 0.4rem;
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+
+  .badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #22D3EE, #A78BFA);
+    color: #06070C;
+  }
 `;
 
 const FDesc = styled.p`
   font-size: 0.9rem;
   color: ${theme.colors.textSecondary};
   line-height: 1.55;
+`;
+
+const FeatureLink = styled(Link)<{ $highlight?: boolean }>`
+  position: relative;
+  display: block;
+  padding: 1.5rem;
+  border-radius: 18px;
+  background: rgba(14, 17, 23, 0.55);
+  border: 1px solid ${p => p.$highlight ? 'rgba(167, 139, 250, 0.45)' : theme.colors.border};
+  backdrop-filter: blur(12px);
+  text-decoration: none;
+  color: inherit;
+  grid-column: ${p => p.$highlight ? '1 / -1' : 'auto'};
+  overflow: hidden;
+  transition: all ${theme.transitions.normal};
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: ${p => p.$highlight
+      ? 'radial-gradient(ellipse at top right, rgba(167,139,250,0.18), transparent 60%), linear-gradient(135deg, rgba(34,211,238,0.08), rgba(167,139,250,0.08))'
+      : theme.gradients.brandSoft};
+    opacity: ${p => p.$highlight ? 1 : 0};
+    transition: opacity ${theme.transitions.normal};
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: ${p => p.$highlight ? '#A78BFA' : 'rgba(34, 211, 238, 0.35)'};
+    box-shadow: 0 16px 40px ${p => p.$highlight ? 'rgba(167, 139, 250, 0.22)' : 'rgba(34, 211, 238, 0.15)'};
+    &::before { opacity: 1; }
+  }
+
+  > * { position: relative; z-index: 1; }
 `;
 
 /* SVG icons */
@@ -402,6 +449,13 @@ const Icon = {
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   ),
+  Globe3D: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <ellipse cx="12" cy="12" rx="9" ry="4" />
+      <ellipse cx="12" cy="12" rx="4" ry="9" />
+    </svg>
+  ),
 };
 
 export const Home: React.FC = () => {
@@ -421,12 +475,13 @@ export const Home: React.FC = () => {
 
           <Actions>
             <PrimaryBtn to="/dashboard"><span>Launch dashboard →</span></PrimaryBtn>
+            <SecondaryBtn to="/visualize">Open visualizer</SecondaryBtn>
             <SecondaryBtn to="/about">About the build</SecondaryBtn>
           </Actions>
 
           <StatsRow>
-            <Stat><strong>6</strong><span>Diagnostic tools</span></Stat>
-            <Stat><strong>&lt; 50ms</strong><span>Typical query</span></Stat>
+            <Stat><strong>8</strong><span>Diagnostic tools</span></Stat>
+            <Stat><strong>5</strong><span>Visualizations</span></Stat>
             <Stat><strong>100%</strong><span>Free to use</span></Stat>
           </StatsRow>
         </div>
@@ -454,6 +509,14 @@ export const Home: React.FC = () => {
       </Hero>
 
       <Features>
+        <FeatureLink to="/visualize" $highlight>
+          <FIcon $accent><Icon.Globe3D /></FIcon>
+          <FTitle>Network Visualizer <span className="badge">New</span></FTitle>
+          <FDesc>
+            Spin a 3D globe of network hops, walk a port skyline, follow traceroute
+            paths on a world map, scan an anycast atlas, and watch TLS handshakes unfold.
+          </FDesc>
+        </FeatureLink>
         <Feature>
           <FIcon><Icon.Bolt /></FIcon>
           <FTitle>Full Diagnostic</FTitle>
