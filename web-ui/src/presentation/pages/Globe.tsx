@@ -11,6 +11,7 @@ import {
 import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
+import { DownloadButton } from '../components/DownloadButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -563,6 +564,7 @@ export const Globe: React.FC = () => {
   const [result, setResult] = useState<TracerouteResponse | null>(null);
   const [hover, setHover] = useState<number | null>(null);
   const [runId, setRunId] = useState(0); // bumped each run to remount arcs and replay animation
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
 
   const run = async (host: string) => {
     const trimmed = host.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
@@ -588,11 +590,11 @@ export const Globe: React.FC = () => {
 
   return (
     <Page>
-      <CanvasWrap>
+      <CanvasWrap ref={canvasWrapRef}>
         <Canvas
           camera={{ position: [0, 0.5, 3.2], fov: 45 }}
           dpr={[1, 2]}
-          gl={{ antialias: true, alpha: false }}
+          gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
         >
           <color attach="background" args={['#04060B']} />
           <Scene
@@ -619,6 +621,12 @@ export const Globe: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Launch'}
         </RunBtn>
+        <DownloadButton
+          getTarget={() => canvasWrapRef.current?.querySelector('canvas') ?? null}
+          filename={`globe-${result?.host ?? 'view'}`}
+          disabled={loading}
+          title="Download globe as PNG"
+        />
       </TopBar>
 
       {result && (

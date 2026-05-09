@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import {
   networkApi,
@@ -8,6 +8,7 @@ import {
 import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
+import { DownloadButton } from '../components/DownloadButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -350,6 +351,7 @@ export const TlsHandshake: React.FC = () => {
   const [target, setTarget] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TlsHandshakeResponse | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const run = async (host: string) => {
     const trimmed = host.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
@@ -393,9 +395,15 @@ export const TlsHandshake: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Connect'}
         </RunBtn>
+        <DownloadButton
+          getTarget={() => contentRef.current}
+          filename={`tls-handshake-${result?.host ?? 'view'}`}
+          disabled={loading || !result || result.phases.length === 0}
+          title="Download handshake timeline as PNG"
+        />
       </TopBar>
 
-      <Content>
+      <Content ref={contentRef}>
         {!result && (
           <Card>
             <EmptyHint>

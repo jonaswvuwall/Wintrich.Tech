@@ -12,6 +12,7 @@ import {
 import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
+import { DownloadButton } from '../components/DownloadButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -412,6 +413,7 @@ export const AnycastAtlas: React.FC = () => {
     typeof window !== 'undefined' ? window.innerWidth > 720 : true
   );
   const mapRef = useRef<LeafletMap | null>(null);
+  const mapWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { ensureAtlasStyle(); }, []);
 
@@ -499,7 +501,7 @@ export const AnycastAtlas: React.FC = () => {
 
   return (
     <Page>
-      <MapWrap>
+      <MapWrap ref={mapWrapRef}>
         <MapContainer
           center={[20, 0]} zoom={2} minZoom={2} maxZoom={10} worldCopyJump
           ref={(m) => { mapRef.current = m as LeafletMap; }}
@@ -510,6 +512,7 @@ export const AnycastAtlas: React.FC = () => {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
             subdomains="abcd"
             maxZoom={20}
+            crossOrigin=""
           />
 
           {links.map(l => (
@@ -584,6 +587,12 @@ export const AnycastAtlas: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Resolve'}
         </RunBtn>
+        <DownloadButton
+          getTarget={() => mapWrapRef.current?.querySelector<HTMLElement>('.leaflet-container') ?? null}
+          filename={`anycast-atlas-${result?.host ?? 'map'}`}
+          disabled={loading || !result}
+          title="Download anycast map as PNG"
+        />
       </TopBar>
 
       {result && (

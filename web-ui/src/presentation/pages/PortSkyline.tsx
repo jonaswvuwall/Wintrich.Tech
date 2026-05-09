@@ -7,6 +7,7 @@ import { networkApi, type PortScanResponse, type PortScanResult } from '../../in
 import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
+import { DownloadButton } from '../components/DownloadButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -665,6 +666,7 @@ export const PortSkyline: React.FC = () => {
   const [result, setResult] = useState<PortScanResponse | null>(null);
   const [hoveredPort, setHoveredPort] = useState<number | null>(null);
   const [runId, setRunId] = useState(0);
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
 
   const open = useMemo(
     () => result?.results.filter(r => r.open) ?? [],
@@ -701,11 +703,11 @@ export const PortSkyline: React.FC = () => {
 
   return (
     <Page>
-      <CanvasWrap>
+      <CanvasWrap ref={canvasWrapRef}>
         <Canvas
           camera={{ position: [0, 5.5, 10], fov: 50 }}
           dpr={[1, 2]}
-          gl={{ antialias: true, alpha: false }}
+          gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
         >
           <color attach="background" args={['#04060B']} />
           <Scene
@@ -733,6 +735,12 @@ export const PortSkyline: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Scan'}
         </RunBtn>
+        <DownloadButton
+          getTarget={() => canvasWrapRef.current?.querySelector('canvas') ?? null}
+          filename={`port-skyline-${result?.host ?? 'view'}`}
+          disabled={loading}
+          title="Download skyline as PNG"
+        />
       </TopBar>
 
       {result && (

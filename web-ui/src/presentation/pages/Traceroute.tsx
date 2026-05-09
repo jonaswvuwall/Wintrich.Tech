@@ -7,6 +7,7 @@ import { networkApi, type TracerouteResponse, type TracerouteHop } from '../../i
 import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
+import { DownloadButton } from '../components/DownloadButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -523,6 +524,7 @@ export const Traceroute: React.FC = () => {
     typeof window !== 'undefined' ? window.innerWidth > 720 : true
   );
   const mapRef = useRef<LeafletMap | null>(null);
+  const mapWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { ensurePulseStyle(); }, []);
 
@@ -568,7 +570,7 @@ export const Traceroute: React.FC = () => {
 
   return (
     <Page>
-      <MapWrap>
+      <MapWrap ref={mapWrapRef}>
         <MapContainer
           center={[20, 0]}
           zoom={2}
@@ -584,6 +586,7 @@ export const Traceroute: React.FC = () => {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
             subdomains="abcd"
             maxZoom={20}
+            crossOrigin=""
           />
 
           {polylinePositions.length >= 2 && (
@@ -644,6 +647,12 @@ export const Traceroute: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Trace path'}
         </RunBtn>
+        <DownloadButton
+          getTarget={() => mapWrapRef.current?.querySelector<HTMLElement>('.leaflet-container') ?? null}
+          filename={`traceroute-${result?.host ?? 'map'}`}
+          disabled={loading || !result || result.hops.length === 0}
+          title="Download traceroute map as PNG"
+        />
       </TopBar>
 
       {result && (
