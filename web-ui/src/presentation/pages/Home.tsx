@@ -425,7 +425,7 @@ export const Home: React.FC = () => {
           </Actions>
 
           <StatsRow>
-            <Stat><strong>6</strong><span>Diagnostic tools</span></Stat>
+            <Stat><strong>7</strong><span>Diagnostic tools</span></Stat>
             <Stat><strong>&lt; 50ms</strong><span>Typical query</span></Stat>
             <Stat><strong>100%</strong><span>Free to use</span></Stat>
           </StatsRow>

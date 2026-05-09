@@ -79,3 +79,13 @@ export const BellIcon: React.FC = () => (
     <path d="M10 21a2 2 0 0 0 4 0" />
   </svg>
 );
+
+export const TraceIcon: React.FC = () => (
+  <svg {...base}>
+    <circle cx="4" cy="5" r="2" />
+    <circle cx="12" cy="12" r="2" />
+    <circle cx="20" cy="19" r="2" />
+    <path d="M5.5 6.5 10.5 11" strokeDasharray="2 2" />
+    <path d="M13.5 13.5 18.5 17.5" strokeDasharray="2 2" />
+  </svg>
+);

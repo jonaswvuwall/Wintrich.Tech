@@ -137,6 +137,33 @@ export interface SharedReportResponse {
   expiresAt: string;
 }
 
+export interface TracerouteHop {
+  hop: number;
+  ip: string | null;
+  hostname: string | null;
+  latencyMs: number | null;
+  reached: boolean;
+  asn: string | null;
+  asnName: string | null;
+  country: string | null;
+  countryCode: string | null;
+  city: string | null;
+  lat: number | null;
+  lon: number | null;
+  isPrivate: boolean;
+}
+
+export interface TracerouteResponse {
+  host: string;
+  destinationIp: string | null;
+  completed: boolean;
+  hopCount: number;
+  totalDurationMs: number;
+  timestamp: string;
+  hops: TracerouteHop[];
+  error: string | null;
+}
+
 class NetworkApiService {
   async ping(host: string): Promise<PingResponse> {
     const response = await fetch(`${API_BASE_URL}/ping?host=${encodeURIComponent(host)}`);
@@ -176,6 +203,12 @@ class NetworkApiService {
 
   async whois(domain: string): Promise<WhoisResponse> {
     const response = await fetch(`${API_BASE_URL}/whois?domain=${encodeURIComponent(domain)}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  }
+
+  async traceroute(host: string): Promise<TracerouteResponse> {
+    const response = await fetch(`${API_BASE_URL}/traceroute?host=${encodeURIComponent(host)}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   }

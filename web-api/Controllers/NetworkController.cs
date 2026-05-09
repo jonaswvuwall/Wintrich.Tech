@@ -24,6 +24,7 @@ public sealed class NetworkController(
     SecurityHeadersService securityHeadersService,
     EmailAuthService emailAuthService,
     WhoisService whoisService,
+    TracerouteService tracerouteService,
     FullReportService fullReportService,
     UrlValidator urlValidator,
     ILogger<NetworkController> logger) : ControllerBase
@@ -144,6 +145,23 @@ public sealed class NetworkController(
         urlValidator.ValidateHost(domain.Trim());
 
         var response = await whoisService.LookupAsync(domain.Trim());
+        return Ok(response);
+    }
+
+    /// <summary>Trace the network path to a host hop-by-hop with geo/ASN enrichment.</summary>
+    [HttpGet("traceroute")]
+    [ProducesResponseType<TracerouteResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Traceroute([FromQuery] string? host, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(host))
+            return BadRequest(new { error = "host query parameter is required" });
+
+        logger.LogInformation("Traceroute request for host: {Host}", host);
+        urlValidator.ValidateHost(host.Trim());
+
+        var response = await tracerouteService.RunAsync(host.Trim(), ct);
         return Ok(response);
     }
 
