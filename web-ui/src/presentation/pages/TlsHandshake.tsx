@@ -83,21 +83,26 @@ const TopBar = styled.header`
   }
 
   @media (max-width: 560px) {
-    padding: 0.55rem 0.6rem;
+    padding: 0.5rem 0.55rem;
     gap: 0.4rem;
+    flex-wrap: wrap;
+    > nav { flex: 1 0 100%; justify-content: center; display: flex; }
   }
 `;
 
 const InputCell = styled.div`
   flex: 1 1 200px; min-width: 0;
   input { margin: 0; height: 38px; padding: 0 0.85rem; font-size: 0.85rem; }
-  @media (max-width: 480px) { input { font-size: 0.8rem; padding: 0 0.6rem; } }
+  @media (max-width: 560px) {
+    flex: 1 1 60%;
+    input { font-size: 0.85rem; height: 36px; padding: 0 0.7rem; }
+  }
 `;
 
 const RunBtn = styled(Button)`
   width: auto; min-width: 110px; height: 38px;
   padding: 0 1.1rem; font-size: 0.85rem; border-radius: 10px; flex-shrink: 0;
-  @media (max-width: 480px) { min-width: 0; padding: 0 0.85rem; font-size: 0.8rem; }
+  @media (max-width: 560px) { min-width: 0; height: 36px; padding: 0 0.85rem; font-size: 0.8rem; }
 `;
 
 const Content = styled.div`
@@ -125,6 +130,11 @@ const Card = styled.section`
             mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor; mask-composite: exclude;
     opacity: 0.4; pointer-events: none;
+  }
+
+  @media (max-width: 560px) {
+    padding: 1rem 0.85rem;
+    border-radius: 14px;
   }
 `;
 
@@ -173,8 +183,8 @@ const PhaseRow = styled.div`
   animation: ${fadeIn} 0.4s ease-out both;
 
   @media (max-width: 560px) {
-    grid-template-columns: 80px 1fr 60px;
-    gap: 0.5rem;
+    grid-template-columns: 60px 1fr 50px;
+    gap: 0.45rem;
   }
 `;
 

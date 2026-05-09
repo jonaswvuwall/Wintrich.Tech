@@ -49,9 +49,8 @@ const Tab = styled(NavLink)`
   }
 
   @media (max-width: 720px) {
-    padding: 0.35rem 0.55rem;
+    padding: 0.32rem 0.5rem;
     font-size: 0.72rem;
-    .lbl { display: none; }
   }
 `;
 

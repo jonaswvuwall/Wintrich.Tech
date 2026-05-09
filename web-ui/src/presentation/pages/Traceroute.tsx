@@ -17,8 +17,8 @@ const dashFlow = keyframes`
 `;
 
 const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 `;
 
 /* ─────────────────────────────────────────────────────────────────
@@ -101,8 +101,9 @@ const MapWrap = styled.div`
 const TopBar = styled.header`
   position: absolute;
   top: clamp(5.5rem, 8vh, 7rem);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   z-index: 1000;
   width: min(900px, calc(100% - 1rem));
   background: rgba(6, 7, 12, 0.78);
@@ -114,7 +115,7 @@ const TopBar = styled.header`
   gap: 0.6rem;
   backdrop-filter: blur(20px) saturate(140%);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
-  animation: ${fadeIn} 0.5s ease-out;
+  animation: ${fadeIn} 0.35s ease-out;
 
   &::before {
     content: '';
@@ -133,8 +134,13 @@ const TopBar = styled.header`
 
   @media (max-width: 560px) {
     top: clamp(4.5rem, 7vh, 5.5rem);
-    padding: 0.55rem 0.6rem;
+    padding: 0.5rem 0.55rem;
     gap: 0.4rem;
+    flex-wrap: wrap;
+    width: calc(100% - 0.7rem);
+
+    /* VisualizeTabs gets its own row, centered */
+    > nav { flex: 1 0 100%; justify-content: center; display: flex; }
   }
 `;
 
@@ -147,8 +153,9 @@ const InputCell = styled.div`
     padding: 0 0.85rem;
     font-size: 0.85rem;
   }
-  @media (max-width: 480px) {
-    input { font-size: 0.8rem; padding: 0 0.6rem; }
+  @media (max-width: 560px) {
+    flex: 1 1 60%;
+    input { font-size: 0.85rem; height: 36px; padding: 0 0.7rem; }
   }
 `;
 
@@ -160,8 +167,9 @@ const RunBtn = styled(Button)`
   font-size: 0.85rem;
   border-radius: 10px;
   flex-shrink: 0;
-  @media (max-width: 480px) {
+  @media (max-width: 560px) {
     min-width: 0;
+    height: 36px;
     padding: 0 0.85rem;
     font-size: 0.8rem;
   }
@@ -171,8 +179,9 @@ const RunBtn = styled(Button)`
 const StatsBar = styled.div`
   position: absolute;
   top: calc(clamp(5.5rem, 8vh, 7rem) + 78px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   z-index: 999;
   display: flex;
   flex-wrap: wrap;
@@ -180,10 +189,13 @@ const StatsBar = styled.div`
   justify-content: center;
   width: min(900px, calc(100% - 1rem));
   pointer-events: none;
-  animation: ${fadeIn} 0.6s ease-out 0.1s both;
+  animation: ${fadeIn} 0.4s ease-out 0.05s both;
 
   @media (max-width: 560px) {
-    top: calc(clamp(4.5rem, 7vh, 5.5rem) + 70px);
+    /* On mobile the TopBar wraps onto two rows, so push stats further down. */
+    top: calc(clamp(4.5rem, 7vh, 5.5rem) + 100px);
+    gap: 0.3rem;
+    padding: 0 0.4rem;
   }
 `;
 
@@ -206,8 +218,9 @@ const Stat = styled.div<{ $tone?: 'ok' | 'warn' | 'fail' }>`
 const ErrorBanner = styled.div`
   position: absolute;
   bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   z-index: 1001;
   background: rgba(244, 63, 94, 0.12);
   border: 1px solid rgba(244, 63, 94, 0.5);
@@ -217,6 +230,7 @@ const ErrorBanner = styled.div`
   backdrop-filter: blur(12px);
   font-size: 0.85rem;
   max-width: 90%;
+  width: max-content;
 `;
 
 /* Right-side hops panel — desktop drawer / mobile bottom sheet */
