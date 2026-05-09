@@ -399,7 +399,7 @@ const CameraRig: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ towers
   const target = useMemo(() => {
     // Look well above the city so it sits in the lower portion of the viewport,
     // clear of the floating top bar / stats / legend.
-    const LIFT = 3.4;
+    const LIFT = 2.0;
     if (towers.length === 0) {
       return {
         dist:   isPortrait ? 13 : 9,
@@ -470,6 +470,7 @@ const CameraRig: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ towers
       autoRotateSpeed={0.6}
       rotateSpeed={0.7}
       zoomSpeed={0.8}
+      target={[0, 2.2, 0]}
       makeDefault
     />
   );
@@ -702,7 +703,7 @@ export const PortSkyline: React.FC = () => {
     <Page>
       <CanvasWrap>
         <Canvas
-          camera={{ position: [0, 4, 9], fov: 50 }}
+          camera={{ position: [0, 5.5, 10], fov: 50 }}
           dpr={[1, 2]}
           gl={{ antialias: true, alpha: false }}
         >
