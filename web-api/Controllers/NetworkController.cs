@@ -27,6 +27,7 @@ public sealed class NetworkController(
     TracerouteService tracerouteService,
     AnycastAtlasService anycastAtlasService,
     TlsHandshakeService tlsHandshakeService,
+    PortScanService portScanService,
     FullReportService fullReportService,
     UrlValidator urlValidator,
     ILogger<NetworkController> logger) : ControllerBase
@@ -198,6 +199,23 @@ public sealed class NetworkController(
         urlValidator.ValidateHost(host.Trim());
 
         var response = await tlsHandshakeService.InspectAsync(host.Trim(), port, ct);
+        return Ok(response);
+    }
+
+    /// <summary>TCP-connect scan against a curated list of common service ports.</summary>
+    [HttpGet("port-scan")]
+    [ProducesResponseType<PortScanResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> PortScan([FromQuery] string? host, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(host))
+            return BadRequest(new { error = "host query parameter is required" });
+
+        logger.LogInformation("Port scan request for host: {Host}", host);
+        urlValidator.ValidateHost(host.Trim());
+
+        var response = await portScanService.ScanAsync(host.Trim(), ct);
         return Ok(response);
     }
 

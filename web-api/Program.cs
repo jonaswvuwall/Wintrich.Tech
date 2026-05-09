@@ -82,6 +82,7 @@ builder.Services.AddSingleton<WhoisService>();
 builder.Services.AddScoped<TracerouteService>();
 builder.Services.AddScoped<AnycastAtlasService>();
 builder.Services.AddScoped<TlsHandshakeService>();
+builder.Services.AddScoped<PortScanService>();
 builder.Services.AddScoped<FullReportService>();
 
 // Persistent stores (file-based, no DB)

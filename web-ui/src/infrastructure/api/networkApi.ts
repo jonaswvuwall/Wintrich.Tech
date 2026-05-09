@@ -225,6 +225,27 @@ export interface TlsHandshakeResponse {
   error: string | null;
 }
 
+export interface PortScanResult {
+  port: number;
+  service: string;
+  category: 'well-known' | 'registered' | 'dynamic';
+  open: boolean;
+  responseMs: number | null;
+  banner: string | null;
+  error: string | null;
+}
+
+export interface PortScanResponse {
+  host: string;
+  resolvedIp: string | null;
+  portsScanned: number;
+  openCount: number;
+  totalDurationMs: number;
+  timestamp: string;
+  results: PortScanResult[];
+  error: string | null;
+}
+
 class NetworkApiService {
   async ping(host: string): Promise<PingResponse> {
     const response = await fetch(`${API_BASE_URL}/ping?host=${encodeURIComponent(host)}`);
@@ -282,6 +303,12 @@ class NetworkApiService {
 
   async tlsHandshake(host: string, port = 443): Promise<TlsHandshakeResponse> {
     const response = await fetch(`${API_BASE_URL}/tls-handshake?host=${encodeURIComponent(host)}&port=${port}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  }
+
+  async portScan(host: string): Promise<PortScanResponse> {
+    const response = await fetch(`${API_BASE_URL}/port-scan?host=${encodeURIComponent(host)}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   }
