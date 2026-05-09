@@ -424,6 +424,7 @@ const Scene: React.FC<{
         dampingFactor={0.08}
         minDistance={1.6}
         maxDistance={6}
+        target={[0, 0.5, 0]}
       />
     </>
   );
@@ -589,7 +590,7 @@ export const Globe: React.FC = () => {
     <Page>
       <CanvasWrap>
         <Canvas
-          camera={{ position: [0, 0, 3.2], fov: 45 }}
+          camera={{ position: [0, 0.5, 3.2], fov: 45 }}
           dpr={[1, 2]}
           gl={{ antialias: true, alpha: false }}
         >

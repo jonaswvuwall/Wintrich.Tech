@@ -397,11 +397,13 @@ const CameraRig: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ towers
   const isPortrait = size.height > size.width;
 
   const target = useMemo(() => {
+    // Look slightly above the city so the topbar doesn't crop the towers.
+    const LIFT = 1.6;
     if (towers.length === 0) {
       return {
         dist:   isPortrait ? 13 : 9,
         height: 4.5,
-        look:   new THREE.Vector3(0, 0.6, 0),
+        look:   new THREE.Vector3(0, 0.6 + LIFT, 0),
       };
     }
     let maxR = 0, maxY = 0;
@@ -415,7 +417,7 @@ const CameraRig: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ towers
     return {
       dist,
       height,
-      look: new THREE.Vector3(0, Math.min(maxY * 0.45, 1.2), 0),
+      look: new THREE.Vector3(0, Math.min(maxY * 0.45, 1.2) + LIFT, 0),
     };
   }, [towers, isPortrait]);
 
