@@ -137,31 +137,6 @@ export interface SharedReportResponse {
   expiresAt: string;
 }
 
-export interface MonitorEntry {
-  id: string;
-  host: string;
-  email: string | null;
-  certWarnDays: number;
-  checkHttp: boolean;
-  checkTls: boolean;
-  createdAt: string;
-  lastCheckedAt: string | null;
-  lastStatus: string | null;
-  lastError: string | null;
-  lastDaysUntilExpiry: number | null;
-  lastHttpStatus: number | null;
-  lastAlertAt: string | null;
-  lastAlertReason: string | null;
-}
-
-export interface CreateMonitorRequest {
-  host: string;
-  email?: string;
-  certWarnDays?: number;
-  checkHttp?: boolean;
-  checkTls?: boolean;
-}
-
 class NetworkApiService {
   async ping(host: string): Promise<PingResponse> {
     const response = await fetch(`${API_BASE_URL}/ping?host=${encodeURIComponent(host)}`);
@@ -229,29 +204,6 @@ class NetworkApiService {
     return response.json();
   }
 
-  async listMonitors(): Promise<MonitorEntry[]> {
-    const base = API_BASE_URL.replace(/\/network$/, '');
-    const response = await fetch(`${base}/monitors`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.json();
-  }
-
-  async createMonitor(req: CreateMonitorRequest): Promise<MonitorEntry> {
-    const base = API_BASE_URL.replace(/\/network$/, '');
-    const response = await fetch(`${base}/monitors`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req),
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.json();
-  }
-
-  async deleteMonitor(id: string): Promise<void> {
-    const base = API_BASE_URL.replace(/\/network$/, '');
-    const response = await fetch(`${base}/monitors/${encodeURIComponent(id)}`, { method: 'DELETE' });
-    if (!response.ok && response.status !== 404) throw new Error(`HTTP ${response.status}`);
-  }
 }
 
 export const networkApi = new NetworkApiService();
