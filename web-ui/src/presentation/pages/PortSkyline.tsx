@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
+import { Text, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import { networkApi, type PortScanResponse, type PortScanResult } from '../../infrastructure/api/networkApi';
 import { theme } from '../styles/theme';
@@ -48,44 +48,40 @@ const serviceColor = (service: string, port: number): string => {
 };
 
 /* ─────────────────────────────────────────────────────────────────
-   City layout
+   Circular layout — every port is equidistant from camera & always in view
    ───────────────────────────────────────────────────────────────── */
-const CITY_WIDTH  = 16; // x extent
-const CITY_DEPTH  = 4;  // z extent
-const TOWER_FOOT  = 0.18;
-const TOWER_GAP   = 0.04;
+const TOWER_FOOT = 0.34;
+const TOWER_GAP  = 0.06;
 
 interface TowerData {
   port: number;
   service: string;
   category: PortScanResult['category'];
-  height: number;       // visual height (clamped log of port latency)
+  height: number;
   color: string;
   banner: string | null;
   responseMs: number | null;
   position: [number, number, number];
+  angle: number;
 }
 
-/** Position a tower along the x-axis using a log mapping of port number, grouped by district. */
+/** Place towers around a circle. Sort by color so categories cluster visually. */
 const layoutTowers = (open: PortScanResult[]): TowerData[] => {
-  // X position: log scale across full port range (1..65535) so well-known ports cluster on the left
-  // but high-numbered services still get distinct positions.
-  const xFor = (port: number) => {
-    const t = Math.log(Math.max(1, port)) / Math.log(65535); // 0..1
-    return -CITY_WIDTH / 2 + t * CITY_WIDTH;
-  };
-
-  // Z position: jitter inside the district by a hash of the port to avoid overlap
-  const zFor = (port: number) => {
-    const hash = Math.sin(port * 12.9898) * 43758.5453;
-    const frac = hash - Math.floor(hash);
-    return -CITY_DEPTH / 2 + frac * CITY_DEPTH;
-  };
-
-  return open.map(r => {
-    // Tower height: faster response = taller, more confident "this is real"
+  const sorted = [...open].sort((a, b) => {
+    const ca = serviceColor(a.service, a.port);
+    const cb = serviceColor(b.service, b.port);
+    if (ca !== cb) return ca < cb ? -1 : 1;
+    return a.port - b.port;
+  });
+  const n = sorted.length;
+  if (n === 0) return [];
+  // Radius grows with count so towers don't crowd each other
+  const circumferenceTarget = Math.max(n * (TOWER_FOOT + 0.5), 14);
+  const radius = Math.max(3.5, circumferenceTarget / (2 * Math.PI));
+  return sorted.map((r, i) => {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
     const ms = r.responseMs ?? 200;
-    const h = 0.6 + Math.max(0.2, Math.min(3.5, 3.5 - Math.log(Math.max(1, ms)) * 0.4));
+    const h = 1.0 + Math.max(0.3, Math.min(3.2, 3.2 - Math.log(Math.max(1, ms)) * 0.45));
     return {
       port: r.port,
       service: r.service,
@@ -94,7 +90,8 @@ const layoutTowers = (open: PortScanResult[]): TowerData[] => {
       color: serviceColor(r.service, r.port),
       banner: r.banner,
       responseMs: r.responseMs,
-      position: [xFor(r.port), 0, zFor(r.port)] as [number, number, number],
+      position: [Math.cos(angle) * radius, 0, Math.sin(angle) * radius] as [number, number, number],
+      angle,
     };
   });
 };
@@ -102,89 +99,137 @@ const layoutTowers = (open: PortScanResult[]): TowerData[] => {
 /* ─────────────────────────────────────────────────────────────────
    3D pieces
    ───────────────────────────────────────────────────────────────── */
-const GroundGrid: React.FC = () => {
-  // Two-plane grid: dark base + cyan grid lines
+
+/** Concentric ring floor with radial spokes — looks like a radar dish. */
+const RingFloor: React.FC<{ radius: number }> = ({ radius }) => {
+  const outer = radius + 1.6;
+  const rings = [0.25, 0.5, 0.75, 1].map(f => f * radius + 0.4);
   return (
     <>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]}>
-        <planeGeometry args={[CITY_WIDTH + 4, CITY_DEPTH + 4]} />
-        <meshBasicMaterial color="#0A0F1F" />
+        <circleGeometry args={[outer, 96]} />
+        <meshBasicMaterial color="#070B17" />
       </mesh>
-      <gridHelper
-        args={[CITY_WIDTH + 4, 40, '#1F2A44', '#162033']}
-        position={[0, 0, 0]}
-      />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
+        <ringGeometry args={[outer - 0.04, outer, 96]} />
+        <meshBasicMaterial color="#22D3EE" transparent opacity={0.35} side={THREE.DoubleSide} toneMapped={false} />
+      </mesh>
+      {rings.map((r, i) => (
+        <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
+          <ringGeometry args={[r - 0.012, r + 0.012, 96]} />
+          <meshBasicMaterial color="#1F2A44" transparent opacity={0.7} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const a = (i / 12) * Math.PI * 2;
+        return (
+          <mesh
+            key={`spoke-${i}`}
+            position={[Math.cos(a) * outer * 0.5, 0.001, Math.sin(a) * outer * 0.5]}
+            rotation={[-Math.PI / 2, 0, -a]}
+          >
+            <planeGeometry args={[outer, 0.012]} />
+            <meshBasicMaterial color="#162033" transparent opacity={0.6} side={THREE.DoubleSide} />
+          </mesh>
+        );
+      })}
     </>
   );
 };
 
-/** Base "district" plates showing groups: well-known / registered / dynamic */
-const Districts: React.FC = () => {
-  // Boundaries at ports 1024 and 49152 → log positions
-  const xAt = (port: number) => {
-    const t = Math.log(port) / Math.log(65535);
-    return -CITY_WIDTH / 2 + t * CITY_WIDTH;
-  };
-  const x1 = xAt(1024);
-  const x2 = xAt(49152);
+/* Active scanning visualisation:
+   • rotating beam fan (radar dish)
+   • three expanding ground ring pulses (sonar)
+   • particle probes flying outward in golden-angle pattern (network packets) */
+const ScanRadar: React.FC<{ radius: number }> = ({ radius }) => {
+  const beamRef   = useRef<THREE.Group>(null);
+  const ring1Ref  = useRef<THREE.Mesh>(null);
+  const ring2Ref  = useRef<THREE.Mesh>(null);
+  const ring3Ref  = useRef<THREE.Mesh>(null);
+  const probesRef = useRef<THREE.Group>(null);
+  const PROBE_COUNT = 48;
+  const reach = radius + 1.5;
 
-  return (
-    <>
-      <DistrictPlate from={-CITY_WIDTH / 2} to={x1} color="#0F2E2A" label="WELL-KNOWN  ·  0–1023" />
-      <DistrictPlate from={x1}              to={x2} color="#0F1A2E" label="REGISTERED  ·  1024–49151" />
-      <DistrictPlate from={x2}              to={CITY_WIDTH / 2} color="#1A0F2E" label="DYNAMIC  ·  49152+" />
-    </>
-  );
-};
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (beamRef.current) beamRef.current.rotation.y = t * 1.6;
 
-const DistrictPlate: React.FC<{ from: number; to: number; color: string; label: string }> = ({ from, to, color, label }) => {
-  const w = to - from;
-  const cx = (from + to) / 2;
+    const animateRing = (m: THREE.Mesh | null, offset: number) => {
+      if (!m) return;
+      const cycle = 1.8;
+      const phase = ((t + offset) % cycle) / cycle;
+      const s = 0.2 + phase * (reach * 1.8);
+      m.scale.set(s, s, s);
+      const mat = m.material as THREE.MeshBasicMaterial;
+      mat.opacity = (1 - phase) * 0.75;
+    };
+    animateRing(ring1Ref.current, 0);
+    animateRing(ring2Ref.current, 0.6);
+    animateRing(ring3Ref.current, 1.2);
+
+    if (probesRef.current) {
+      const kids = probesRef.current.children;
+      for (let i = 0; i < kids.length; i++) {
+        const cycle = 1.6;
+        const offset = (i / kids.length) * cycle;
+        const p = ((t + offset) % cycle) / cycle;
+        const angle = i * 2.39996; // golden angle for even spread
+        const r = p * reach;
+        const c = kids[i] as THREE.Mesh;
+        c.position.set(Math.cos(angle) * r, 0.18 + Math.sin(p * Math.PI) * 0.5, Math.sin(angle) * r);
+        const mat = c.material as THREE.MeshBasicMaterial;
+        mat.opacity = (1 - p) * 0.95;
+      }
+    }
+  });
+
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[cx, 0.001, 0]}>
-        <planeGeometry args={[w - 0.05, CITY_DEPTH]} />
-        <meshBasicMaterial color={color} transparent opacity={0.55} />
+      {/* Central scanner pillar */}
+      <mesh position={[0, 0.55, 0]}>
+        <cylinderGeometry args={[0.09, 0.14, 1.1, 20]} />
+        <meshStandardMaterial color="#22D3EE" emissive="#22D3EE" emissiveIntensity={1.6} toneMapped={false} />
       </mesh>
-      <Text
-        position={[cx, 0.01, CITY_DEPTH / 2 + 0.5]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.18}
-        color="#7C9CFF"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.005}
-        outlineColor="#000"
-      >
-        {label}
-      </Text>
+      <mesh position={[0, 1.18, 0]}>
+        <sphereGeometry args={[0.18, 24, 24]} />
+        <meshStandardMaterial color="#A78BFA" emissive="#A78BFA" emissiveIntensity={2.2} toneMapped={false} />
+      </mesh>
+      <pointLight position={[0, 1.2, 0]} intensity={2.4} distance={radius * 2 + 4} color="#22D3EE" />
+
+      {/* Rotating sweep fan */}
+      <group ref={beamRef} position={[0, 0.4, 0]}>
+        <mesh position={[reach / 2, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.3, reach, 48, 1, 0, Math.PI / 5]} />
+          <meshBasicMaterial color="#22D3EE" transparent opacity={0.28} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+        </mesh>
+        <mesh position={[reach / 2, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.3, reach, 48, 1, 0, Math.PI / 18]} />
+          <meshBasicMaterial color="#A78BFA" transparent opacity={0.85} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+        </mesh>
+      </group>
+
+      {/* Expanding ground rings */}
+      {[ring1Ref, ring2Ref, ring3Ref].map((ref, i) => (
+        <mesh key={i} ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, 0]}>
+          <ringGeometry args={[0.5, 0.56, 64]} />
+          <meshBasicMaterial color="#22D3EE" transparent opacity={0.7} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+        </mesh>
+      ))}
+
+      {/* Outbound probe packets */}
+      <group ref={probesRef}>
+        {Array.from({ length: PROBE_COUNT }).map((_, i) => (
+          <mesh key={i}>
+            <sphereGeometry args={[0.055, 8, 8]} />
+            <meshBasicMaterial color={i % 4 === 0 ? '#A78BFA' : '#22D3EE'} transparent opacity={0.9} toneMapped={false} />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 };
 
-/* Sweeping scan wave — semi-transparent vertical plane that travels left → right while loading. */
-const ScanWave: React.FC<{ active: boolean }> = ({ active }) => {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (!ref.current) return;
-    if (!active) {
-      ref.current.visible = false;
-      return;
-    }
-    ref.current.visible = true;
-    const period = 2.4; // seconds
-    const t = (clock.elapsedTime % period) / period;
-    ref.current.position.x = -CITY_WIDTH / 2 + t * CITY_WIDTH;
-  });
-  return (
-    <mesh ref={ref} position={[-CITY_WIDTH / 2, 2, 0]}>
-      <planeGeometry args={[0.15, 4]} />
-      <meshBasicMaterial color="#22D3EE" transparent opacity={0.4} side={THREE.DoubleSide} toneMapped={false} />
-    </mesh>
-  );
-};
-
-/* A single tower — animated grow-in, hover glow, click to lift label */
+/* A single tower — grow-in animation, always-visible port label, hover glow */
 const Tower: React.FC<{
   data: TowerData;
   delay: number;
@@ -194,21 +239,23 @@ const Tower: React.FC<{
   const meshRef = useRef<THREE.Mesh>(null);
   const baseRef = useRef<THREE.Mesh>(null);
   const startRef = useRef<number | null>(null);
+  const [grown, setGrown] = useState(false);
 
   useFrame(({ clock }) => {
     if (startRef.current === null) startRef.current = clock.elapsedTime + delay;
     const elapsed = clock.elapsedTime - startRef.current;
-    const t = Math.max(0, Math.min(1, elapsed / 0.6));
+    const t = Math.max(0, Math.min(1, elapsed / 0.7));
     const eased = 1 - Math.pow(1 - t, 3);
+    if (t >= 1 && !grown) setGrown(true);
     if (meshRef.current) {
-      meshRef.current.scale.y = eased;
+      meshRef.current.scale.y = Math.max(eased, 0.001);
       meshRef.current.position.y = (data.height * eased) / 2;
       const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity = hovered ? 1.6 : 0.7 + Math.sin(clock.elapsedTime * 2 + data.port) * 0.15;
+      mat.emissiveIntensity = hovered ? 1.8 : 0.85 + Math.sin(clock.elapsedTime * 2 + data.port) * 0.18;
     }
     if (baseRef.current) {
       const m = baseRef.current.material as THREE.MeshBasicMaterial;
-      m.opacity = hovered ? 0.9 : 0.5;
+      m.opacity = hovered ? 1 : 0.55 + Math.sin(clock.elapsedTime * 2 + data.port) * 0.1;
     }
   });
 
@@ -216,8 +263,8 @@ const Tower: React.FC<{
     <group position={data.position}>
       {/* Glowing base pad */}
       <mesh ref={baseRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-        <ringGeometry args={[TOWER_FOOT * 0.8, TOWER_FOOT * 1.4, 24]} />
-        <meshBasicMaterial color={data.color} transparent opacity={0.5} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
+        <ringGeometry args={[TOWER_FOOT * 0.85, TOWER_FOOT * 1.5, 24]} />
+        <meshBasicMaterial color={data.color} transparent opacity={0.55} side={THREE.DoubleSide} toneMapped={false} depthWrite={false} />
       </mesh>
       {/* Tower body */}
       <mesh
@@ -231,35 +278,42 @@ const Tower: React.FC<{
         <meshStandardMaterial
           color={data.color}
           emissive={data.color}
-          emissiveIntensity={0.7}
-          roughness={0.4}
-          metalness={0.1}
+          emissiveIntensity={0.85}
+          roughness={0.35}
+          metalness={0.15}
           toneMapped={false}
         />
       </mesh>
-      {/* Antenna spike on top */}
-      <mesh position={[0, data.height + 0.08, 0]}>
-        <cylinderGeometry args={[0.005, 0.005, 0.12, 6]} />
-        <meshBasicMaterial color={data.color} toneMapped={false} />
-      </mesh>
       {/* Beacon light at the top */}
-      <mesh position={[0, data.height + 0.16, 0]}>
-        <sphereGeometry args={[hovered ? 0.04 : 0.025, 12, 12]} />
+      <mesh position={[0, data.height + 0.1, 0]}>
+        <sphereGeometry args={[hovered ? 0.07 : 0.045, 14, 14]} />
         <meshBasicMaterial color={data.color} toneMapped={false} />
       </mesh>
-      {/* Floating port label, only when hovered */}
-      {hovered && (
-        <Text
-          position={[0, data.height + 0.4, 0]}
-          fontSize={0.13}
-          color={data.color}
-          anchorX="center"
-          anchorY="middle"
-          outlineWidth={0.008}
-          outlineColor="#000"
-        >
-          {data.port} · {data.service}
-        </Text>
+      {/* Always-visible port label, billboarded to camera */}
+      {grown && (
+        <Billboard position={[0, data.height + 0.55, 0]}>
+          <Text
+            fontSize={0.34}
+            color={data.color}
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={0.018}
+            outlineColor="#000"
+          >
+            :{data.port}
+          </Text>
+          <Text
+            position={[0, -0.32, 0]}
+            fontSize={0.18}
+            color="#E8EEFF"
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={0.012}
+            outlineColor="#000"
+          >
+            {data.service}
+          </Text>
+        </Billboard>
       )}
     </group>
   );
@@ -274,17 +328,20 @@ const Scene: React.FC<{
   hoveredPort: number | null;
   setHoveredPort: (p: number | null) => void;
 }> = ({ towers, loading, hoveredPort, setHoveredPort }) => {
+  const maxRadius = useMemo(() => {
+    if (towers.length === 0) return 5;
+    return Math.max(...towers.map(t => Math.hypot(t.position[0], t.position[2])));
+  }, [towers]);
+
   return (
     <>
-      <ambientLight intensity={0.45} />
+      <ambientLight intensity={0.55} />
       <directionalLight position={[5, 10, 5]} intensity={0.7} />
-      <directionalLight position={[-6, 4, -4]} intensity={0.25} color="#7C9CFF" />
-      {/* Soft fog for depth */}
-      <fog attach="fog" args={['#04060B', 8, 30]} />
+      <directionalLight position={[-6, 4, -4]} intensity={0.3} color="#7C9CFF" />
+      <fog attach="fog" args={['#04060B', 14, 42]} />
 
-      <GroundGrid />
-      <Districts />
-      <ScanWave active={loading} />
+      <RingFloor radius={maxRadius} />
+      {loading && <ScanRadar radius={Math.max(maxRadius, 5)} />}
 
       {towers.map((t, i) => (
         <Tower
@@ -302,57 +359,52 @@ const Scene: React.FC<{
 };
 
 /* Camera behaviour:
-   • While scanning   → slow cinematic orbit around the city (feels alive).
-   • After results    → smoothly ease to a static framing that fits every tower
-                         in view, then hold rock-still so users can read it.
-   • Idle / no towers → gentle hold at a default vantage point. */
+   • Scanning           → cinematic orbit around the radar (energy & motion)
+   • Results in         → ease to a static framing that fits every tower
+                          (viewport-aware: portrait pulls the camera back further)
+   • Idle / no towers   → default vantage  */
 const CinematicCamera: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ towers, loading }) => {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
+  const isPortrait = size.height > size.width;
 
-  // Compute a static framing position that comfortably contains all towers.
   const framing = useMemo(() => {
     if (towers.length === 0) {
-      return { pos: [0, 4, 9] as [number, number, number], look: [0, 0.6, 0] as [number, number, number] };
+      return {
+        pos:  [0, 4.5, isPortrait ? 13 : 9] as [number, number, number],
+        look: [0, 0.6, 0] as [number, number, number],
+      };
     }
-    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, maxY = 0;
+    let maxR = 0, maxY = 0;
     for (const t of towers) {
-      const [x, , z] = t.position;
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (z < minZ) minZ = z;
-      if (z > maxZ) maxZ = z;
+      const r = Math.hypot(t.position[0], t.position[2]);
+      if (r > maxR) maxR = r;
       if (t.height > maxY) maxY = t.height;
     }
-    const cx = (minX + maxX) / 2;
-    const cz = (minZ + maxZ) / 2;
-    const spanX = Math.max(maxX - minX, 4);
-    const spanZ = Math.max(maxZ - minZ, 4);
-    // Distance scaled so the wider of the two spans fits with margin.
-    const dist = Math.max(spanX * 0.85, spanZ * 1.2, 8);
-    const height = Math.max(maxY * 0.55 + 3.2, 4.2);
+    // Distance scaled to fit ring; portrait needs ~1.6x extra pull-back.
+    const baseDist = maxR + 3.5;
+    const dist = baseDist * (isPortrait ? 1.95 : 1.35);
+    const height = Math.max(maxY * 0.7 + 3.5, maxR * 0.85);
     return {
-      pos: [cx, height, cz + dist] as [number, number, number],
-      look: [cx, Math.min(maxY * 0.35, 1.2), cz] as [number, number, number],
+      pos:  [0, height, dist] as [number, number, number],
+      look: [0, Math.min(maxY * 0.45, 1.2), 0] as [number, number, number],
     };
-  }, [towers]);
+  }, [towers, isPortrait]);
 
   const lookTarget = useRef(new THREE.Vector3(...framing.look));
 
   useFrame(({ clock }, delta) => {
     if (loading) {
-      // Cinematic orbit while scanning.
-      const t = clock.elapsedTime * 0.18;
-      const radius = 9.5;
-      const sway = Math.sin(t * 0.7) * 1.2;
-      camera.position.x = Math.sin(t) * radius * 0.35 + sway;
-      camera.position.y = 4 + Math.sin(t * 0.5) * 0.4;
-      camera.position.z = Math.cos(t) * radius * 0.7 + 6.5;
+      const t = clock.elapsedTime * 0.28;
+      const radius = isPortrait ? 12 : 9.5;
+      camera.position.x = Math.sin(t) * radius * 0.55;
+      camera.position.y = 4.5 + Math.sin(t * 0.5) * 0.5;
+      camera.position.z = Math.cos(t) * radius * 0.75 + 1.5;
       lookTarget.current.set(0, 0.6, 0);
       camera.lookAt(lookTarget.current);
       return;
     }
-    // Ease to the static framing position. Frame-rate independent lerp.
-    const k = 1 - Math.pow(0.001, delta); // ~99% of the way in 1 second
+    // Smoothly ease into static framing then hold.
+    const k = 1 - Math.pow(0.001, delta); // ~99% of the way per second
     camera.position.x += (framing.pos[0] - camera.position.x) * k;
     camera.position.y += (framing.pos[1] - camera.position.y) * k;
     camera.position.z += (framing.pos[2] - camera.position.z) * k;
