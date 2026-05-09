@@ -397,8 +397,9 @@ const CameraRig: React.FC<{ towers: TowerData[]; loading: boolean }> = ({ towers
   const isPortrait = size.height > size.width;
 
   const target = useMemo(() => {
-    // Look slightly above the city so the topbar doesn't crop the towers.
-    const LIFT = 1.6;
+    // Look well above the city so it sits in the lower portion of the viewport,
+    // clear of the floating top bar / stats / legend.
+    const LIFT = 3.4;
     if (towers.length === 0) {
       return {
         dist:   isPortrait ? 13 : 9,
