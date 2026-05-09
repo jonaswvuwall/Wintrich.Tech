@@ -275,7 +275,8 @@ export const Navigation: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
   return (
     <>
@@ -293,7 +294,7 @@ export const Navigation: React.FC = () => {
           <Links>
             <StyledLink to="/" $active={isActive('/')}>Home</StyledLink>
             <StyledLink to="/dashboard" $active={isActive('/dashboard')}>Dashboard</StyledLink>
-            <StyledLink to="/traceroute" $active={isActive('/traceroute')}>Traceroute</StyledLink>
+            <StyledLink to="/visualize" $active={isActive('/visualize')}>Visualize</StyledLink>
             <StyledLink to="/about" $active={isActive('/about')}>About</StyledLink>
           </Links>
 
@@ -318,7 +319,7 @@ export const Navigation: React.FC = () => {
           <Sheet id="mobile-nav-sheet" role="menu">
             <SheetLink to="/" $active={isActive('/')} role="menuitem">Home</SheetLink>
             <SheetLink to="/dashboard" $active={isActive('/dashboard')} role="menuitem">Dashboard</SheetLink>
-            <SheetLink to="/traceroute" $active={isActive('/traceroute')} role="menuitem">Traceroute</SheetLink>
+            <SheetLink to="/visualize" $active={isActive('/visualize')} role="menuitem">Visualize</SheetLink>
             <SheetLink to="/about" $active={isActive('/about')} role="menuitem">About</SheetLink>
           </Sheet>
         </>

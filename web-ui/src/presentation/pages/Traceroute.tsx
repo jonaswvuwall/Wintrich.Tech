@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import { networkApi, type TracerouteResponse, type TracerouteHop } from '../../infrastructure/api/networkApi';
 import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
-import { TraceIcon } from '../components/common/ToolIcons';
+import { VisualizeTabs } from '../components/VisualizeTabs';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -136,52 +136,6 @@ const TopBar = styled.header`
     padding: 0.55rem 0.6rem;
     gap: 0.4rem;
   }
-`;
-
-const TitleBlock = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding-right: 0.75rem;
-  border-right: 1px solid ${theme.colors.border};
-  flex-shrink: 0;
-
-  @media (max-width: 720px) {
-    padding-right: 0.5rem;
-    .subtitle { display: none; }
-  }
-  @media (max-width: 480px) {
-    padding-right: 0.4rem;
-    .label { display: none; }
-  }
-`;
-
-const TitleIcon = styled.div`
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: ${theme.gradients.brandSoft};
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${theme.colors.primary};
-  flex-shrink: 0;
-  svg { width: 18px; height: 18px; stroke-width: 1.8; }
-`;
-
-const Title = styled.h1`
-  margin: 0;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: ${theme.colors.text};
-  white-space: nowrap;
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  .subtitle { color: ${theme.colors.textMuted}; font-weight: 400; font-size: 0.8rem; }
 `;
 
 const InputCell = styled.div`
@@ -662,10 +616,7 @@ export const Traceroute: React.FC = () => {
       </MapWrap>
 
       <TopBar>
-        <TitleBlock>
-          <TitleIcon><TraceIcon /></TitleIcon>
-          <Title><span className="label">Traceroute</span><span className="subtitle">live network path</span></Title>
-        </TitleBlock>
+        <VisualizeTabs />
         <InputCell>
           <Input
             type="text"

@@ -164,6 +164,67 @@ export interface TracerouteResponse {
   error: string | null;
 }
 
+export interface AnycastResolver {
+  name: string;
+  provider: string;
+  ip: string;
+  lat: number;
+  lon: number;
+  country: string;
+  countryCode: string;
+  city: string | null;
+  resolvedIps: string[];
+  latencyMs: number | null;
+  error: string | null;
+}
+
+export interface AnycastEndpoint {
+  ip: string;
+  asn: string | null;
+  asnName: string | null;
+  country: string | null;
+  countryCode: string | null;
+  city: string | null;
+  lat: number | null;
+  lon: number | null;
+  resolverCount: number;
+}
+
+export interface AnycastAtlasResponse {
+  host: string;
+  timestamp: string;
+  totalDurationMs: number;
+  uniqueEndpoints: number;
+  resolverCount: number;
+  resolvers: AnycastResolver[];
+  endpoints: AnycastEndpoint[];
+  error: string | null;
+}
+
+export interface TlsHandshakePhase {
+  name: string;
+  description: string;
+  startMs: number;
+  durationMs: number;
+  success: boolean;
+  detail: string | null;
+}
+
+export interface TlsHandshakeResponse {
+  host: string;
+  port: number;
+  resolvedIp: string | null;
+  protocol: string | null;
+  cipherSuite: string | null;
+  issuer: string | null;
+  subject: string | null;
+  certDaysUntilExpiry: number | null;
+  totalMs: number;
+  timestamp: string;
+  phases: TlsHandshakePhase[];
+  error: string | null;
+}
+
 class NetworkApiService {
   async ping(host: string): Promise<PingResponse> {
     const response = await fetch(`${API_BASE_URL}/ping?host=${encodeURIComponent(host)}`);
@@ -209,6 +270,18 @@ class NetworkApiService {
 
   async traceroute(host: string): Promise<TracerouteResponse> {
     const response = await fetch(`${API_BASE_URL}/traceroute?host=${encodeURIComponent(host)}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  }
+
+  async anycastAtlas(host: string): Promise<AnycastAtlasResponse> {
+    const response = await fetch(`${API_BASE_URL}/anycast-atlas?host=${encodeURIComponent(host)}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  }
+
+  async tlsHandshake(host: string, port = 443): Promise<TlsHandshakeResponse> {
+    const response = await fetch(`${API_BASE_URL}/tls-handshake?host=${encodeURIComponent(host)}&port=${port}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   }

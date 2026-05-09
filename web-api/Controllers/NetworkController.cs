@@ -25,6 +25,8 @@ public sealed class NetworkController(
     EmailAuthService emailAuthService,
     WhoisService whoisService,
     TracerouteService tracerouteService,
+    AnycastAtlasService anycastAtlasService,
+    TlsHandshakeService tlsHandshakeService,
     FullReportService fullReportService,
     UrlValidator urlValidator,
     ILogger<NetworkController> logger) : ControllerBase
@@ -162,6 +164,40 @@ public sealed class NetworkController(
         urlValidator.ValidateHost(host.Trim());
 
         var response = await tracerouteService.RunAsync(host.Trim(), ct);
+        return Ok(response);
+    }
+
+    /// <summary>Resolve a host from a curated set of public DNS resolvers worldwide.</summary>
+    [HttpGet("anycast-atlas")]
+    [ProducesResponseType<AnycastAtlasResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> AnycastAtlas([FromQuery] string? host, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(host))
+            return BadRequest(new { error = "host query parameter is required" });
+
+        logger.LogInformation("Anycast atlas request for host: {Host}", host);
+        urlValidator.ValidateHost(host.Trim());
+
+        var response = await anycastAtlasService.RunAsync(host.Trim(), ct);
+        return Ok(response);
+    }
+
+    /// <summary>Open a TLS connection and report the elapsed time for each phase.</summary>
+    [HttpGet("tls-handshake")]
+    [ProducesResponseType<TlsHandshakeResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> TlsHandshake([FromQuery] string? host, [FromQuery] int port = 443, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(host))
+            return BadRequest(new { error = "host query parameter is required" });
+
+        logger.LogInformation("TLS handshake timeline request for host: {Host}", host);
+        urlValidator.ValidateHost(host.Trim());
+
+        var response = await tlsHandshakeService.InspectAsync(host.Trim(), port, ct);
         return Ok(response);
     }
 

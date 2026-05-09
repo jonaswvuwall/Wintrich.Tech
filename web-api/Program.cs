@@ -80,6 +80,8 @@ builder.Services.AddScoped<SecurityHeadersService>();
 builder.Services.AddScoped<EmailAuthService>();
 builder.Services.AddSingleton<WhoisService>();
 builder.Services.AddScoped<TracerouteService>();
+builder.Services.AddScoped<AnycastAtlasService>();
+builder.Services.AddScoped<TlsHandshakeService>();
 builder.Services.AddScoped<FullReportService>();
 
 // Persistent stores (file-based, no DB)
