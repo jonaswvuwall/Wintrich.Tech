@@ -79,121 +79,42 @@ const colorForAsn = (asnName: string | null): string => {
 };
 
 /* ─────────────────────────────────────────────────────────────────
-   Earth — procedural shader sphere, no external textures
+   Earth — real NASA Blue Marble + topo bump, served from a CDN
+   No rotation: beacons live in the same world space as the planet,
+   so locking rotation keeps every hop pinned to its real coordinates.
    ───────────────────────────────────────────────────────────────── */
-const earthVertexShader = /* glsl */ `
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  varying vec2 vUv;
-  void main() {
-    vNormal = normalize(normalMatrix * normal);
-    vPosition = position;
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const earthFragmentShader = /* glsl */ `
-  uniform vec3 uOcean;
-  uniform vec3 uLand;
-  uniform vec3 uGrid;
-  uniform float uTime;
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  varying vec2 vUv;
-
-  // Hash noise — cheap, good enough for fake continents
-  float hash(vec3 p) {
-    p = fract(p * 0.3183099 + vec3(0.71, 0.113, 0.419));
-    p *= 17.0;
-    return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
-  }
-  float noise(vec3 p) {
-    vec3 i = floor(p);
-    vec3 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    return mix(
-      mix(mix(hash(i + vec3(0,0,0)), hash(i + vec3(1,0,0)), f.x),
-          mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
-      mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x),
-          mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y),
-      f.z
-    );
-  }
-  float fbm(vec3 p) {
-    float v = 0.0; float a = 0.5;
-    for (int i = 0; i < 5; i++) {
-      v += a * noise(p);
-      p *= 2.0; a *= 0.5;
-    }
-    return v;
-  }
-
-  void main() {
-    vec3 p = normalize(vPosition);
-
-    // Continents: thresholded fractal noise
-    float n = fbm(p * 2.4);
-    float land = smoothstep(0.46, 0.52, n);
-    vec3 base = mix(uOcean, uLand, land);
-
-    // Polar ice caps
-    float ice = smoothstep(0.78, 0.92, abs(p.y));
-    base = mix(base, vec3(0.85, 0.92, 1.0), ice * 0.7);
-
-    // Subtle latitude grid lines (every 15 deg)
-    float lat = degrees(asin(p.y));
-    float lon = degrees(atan(p.z, p.x));
-    float latLine = smoothstep(0.85, 1.0, 1.0 - abs(fract(lat / 15.0) - 0.5) * 2.0);
-    float lonLine = smoothstep(0.92, 1.0, 1.0 - abs(fract(lon / 15.0) - 0.5) * 2.0);
-    float grid = max(latLine, lonLine) * 0.18;
-    base += uGrid * grid;
-
-    // Faux night-side: slow rotating "city lights" pattern, dim
-    float lights = pow(noise(p * 18.0 + vec3(uTime * 0.05)), 8.0) * land;
-    base += vec3(1.0, 0.7, 0.3) * lights * 0.35;
-
-    // Soft directional lighting from front-right
-    vec3 lightDir = normalize(vec3(0.4, 0.3, 1.0));
-    float lambert = max(dot(normalize(vNormal), lightDir), 0.0);
-    base *= 0.35 + 0.85 * lambert;
-
-    // Fresnel rim — adds depth at edges
-    float fresnel = pow(1.0 - max(dot(normalize(vNormal), vec3(0.0, 0.0, 1.0)), 0.0), 2.0);
-    base += vec3(0.15, 0.4, 0.6) * fresnel * 0.4;
-
-    gl_FragColor = vec4(base, 1.0);
-  }
-`;
+const EARTH_TEXTURE_URL =
+  'https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg';
+const EARTH_TOPO_URL =
+  'https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png';
 
 const Earth: React.FC = () => {
-  const matRef = useRef<THREE.ShaderMaterial>(null);
-  const meshRef = useRef<THREE.Mesh>(null);
+  const [colorMap, bumpMap] = useLoader(THREE.TextureLoader, [EARTH_TEXTURE_URL, EARTH_TOPO_URL]);
 
-  const uniforms = useMemo(() => ({
-    uOcean: { value: new THREE.Color('#0A1633') },
-    uLand:  { value: new THREE.Color('#1A4D3A') },
-    uGrid:  { value: new THREE.Color('#22D3EE') },
-    uTime:  { value: 0 },
-  }), []);
-
-  useFrame(({ clock }) => {
-    if (matRef.current) matRef.current.uniforms.uTime.value = clock.elapsedTime;
-    if (meshRef.current) meshRef.current.rotation.y += 0.0006; // slow auto-rotate
-  });
+  // Make sure colors are sRGB-correct
+  if (colorMap) colorMap.colorSpace = THREE.SRGBColorSpace;
 
   return (
-    <mesh ref={meshRef}>
+    <mesh>
       <sphereGeometry args={[GLOBE_RADIUS, 96, 96]} />
-      <shaderMaterial
-        ref={matRef}
-        vertexShader={earthVertexShader}
-        fragmentShader={earthFragmentShader}
-        uniforms={uniforms}
+      <meshPhongMaterial
+        map={colorMap}
+        bumpMap={bumpMap}
+        bumpScale={0.04}
+        shininess={6}
+        specular={new THREE.Color('#1a3a55')}
       />
     </mesh>
   );
 };
+
+/* Lightweight loading placeholder — solid sphere shown while textures stream in. */
+const EarthPlaceholder: React.FC = () => (
+  <mesh>
+    <sphereGeometry args={[GLOBE_RADIUS, 48, 48]} />
+    <meshBasicMaterial color="#0A1633" />
+  </mesh>
+);
 
 /* ─────────────────────────────────────────────────────────────────
    Atmosphere — fresnel glow halo around the planet
@@ -465,11 +386,14 @@ const Scene: React.FC<{
 
   return (
     <>
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[5, 3, 5]} intensity={0.6} />
+      <ambientLight intensity={0.55} />
+      <directionalLight position={[5, 3, 5]} intensity={0.9} />
+      <directionalLight position={[-5, -2, -3]} intensity={0.15} color="#7C9CFF" />
       <Stars radius={50} depth={50} count={4000} factor={4} saturation={0} fade speed={0.5} />
 
-      <Earth />
+      <React.Suspense fallback={<EarthPlaceholder />}>
+        <Earth />
+      </React.Suspense>
       <Atmosphere />
 
       {plotted.map((h, i) => (
@@ -500,8 +424,6 @@ const Scene: React.FC<{
         dampingFactor={0.08}
         minDistance={1.6}
         maxDistance={6}
-        autoRotate={plotted.length === 0}
-        autoRotateSpeed={0.4}
       />
     </>
   );
@@ -719,6 +641,3 @@ export const Globe: React.FC = () => {
     </Page>
   );
 };
-
-/* Suppress unused-import warning when textures aren't loaded — kept for future expansion */
-void useLoader;
