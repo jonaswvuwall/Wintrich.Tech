@@ -293,6 +293,7 @@ export const Navigation: React.FC = () => {
           <Links>
             <StyledLink to="/" $active={isActive('/')}>Home</StyledLink>
             <StyledLink to="/dashboard" $active={isActive('/dashboard')}>Dashboard</StyledLink>
+            <StyledLink to="/traceroute" $active={isActive('/traceroute')}>Traceroute</StyledLink>
             <StyledLink to="/about" $active={isActive('/about')}>About</StyledLink>
           </Links>
 
@@ -317,6 +318,7 @@ export const Navigation: React.FC = () => {
           <Sheet id="mobile-nav-sheet" role="menu">
             <SheetLink to="/" $active={isActive('/')} role="menuitem">Home</SheetLink>
             <SheetLink to="/dashboard" $active={isActive('/dashboard')} role="menuitem">Dashboard</SheetLink>
+            <SheetLink to="/traceroute" $active={isActive('/traceroute')} role="menuitem">Traceroute</SheetLink>
             <SheetLink to="/about" $active={isActive('/about')} role="menuitem">About</SheetLink>
           </Sheet>
         </>

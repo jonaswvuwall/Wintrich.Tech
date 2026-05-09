@@ -7,7 +7,6 @@ import { TlsTool } from '../components/TlsTool';
 import { SecurityTool } from '../components/SecurityTool';
 import { EmailAuthTool } from '../components/EmailAuthTool';
 import { WhoisTool } from '../components/WhoisTool';
-import { TracerouteTool } from '../components/TracerouteTool';
 import { FullDiagnosticTool } from '../components/FullDiagnosticTool';
 import { ScrollToTop } from '../components/ScrollToTop';
 import { theme } from '../styles/theme';
@@ -249,13 +248,12 @@ export const Dashboard: React.FC = () => {
         </div>
         <TopMeta>
           <MetaPill>API <b>online</b></MetaPill>
-          <MetaPill $color={theme.colors.primary}><b>9</b> tools active</MetaPill>
+          <MetaPill $color={theme.colors.primary}><b>8</b> tools active</MetaPill>
         </TopMeta>
       </Header>
 
       <Grid>
         <FullDiagnosticTool />
-        <TracerouteTool />
         <PingTool />
         <DnsTool />
         <HttpTool />
