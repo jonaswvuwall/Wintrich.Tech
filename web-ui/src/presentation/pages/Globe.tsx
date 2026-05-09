@@ -1,8 +1,10 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { OrbitControls, Stars, Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { feature, mesh as topoMesh } from 'topojson-client';
+import type { Topology, GeometryCollection } from 'topojson-specification';
 import {
   networkApi,
   type TracerouteResponse,
@@ -116,6 +118,82 @@ const EarthPlaceholder: React.FC = () => (
     <meshBasicMaterial color="#0A1633" />
   </mesh>
 );
+
+/* ─────────────────────────────────────────────────────────────────
+   Country borders — thin glowing lines projected onto the sphere
+   Source: world-atlas TopoJSON (Natural Earth 110m via unpkg).
+   ───────────────────────────────────────────────────────────────── */
+const BORDERS_URL = 'https://unpkg.com/world-atlas@2/countries-110m.json';
+
+/** Convert a (lon, lat) MultiLineString from TopoJSON into a flat positions buffer. */
+const buildBorderGeometry = (topo: Topology): THREE.BufferGeometry => {
+  // `mesh` returns the shared boundaries between countries as a MultiLineString.
+  const objs = topo.objects as Record<string, GeometryCollection>;
+  const countriesObj = objs.countries ?? objs[Object.keys(objs)[0]];
+  const borders = topoMesh(topo, countriesObj, (a, b) => a !== b);
+  const coastlines = feature(topo, countriesObj);
+
+  const positions: number[] = [];
+  const radius = GLOBE_RADIUS * 1.0015;
+
+  const pushSegment = (lon1: number, lat1: number, lon2: number, lat2: number) => {
+    const a = latLonToVec3(lat1, lon1, radius);
+    const b = latLonToVec3(lat2, lon2, radius);
+    positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+  };
+
+  const drawLine = (line: number[][]) => {
+    for (let i = 0; i < line.length - 1; i++) {
+      pushSegment(line[i][0], line[i][1], line[i + 1][0], line[i + 1][1]);
+    }
+  };
+
+  const walk = (geom: GeoJSON.Geometry) => {
+    if (geom.type === 'LineString') drawLine(geom.coordinates);
+    else if (geom.type === 'MultiLineString') geom.coordinates.forEach(drawLine);
+    else if (geom.type === 'Polygon') geom.coordinates.forEach(drawLine);
+    else if (geom.type === 'MultiPolygon') geom.coordinates.forEach(p => p.forEach(drawLine));
+    else if (geom.type === 'GeometryCollection') geom.geometries.forEach(walk);
+  };
+
+  walk(borders as GeoJSON.Geometry);
+  // Add coastlines so islands without internal borders still appear.
+  const cl = coastlines as GeoJSON.FeatureCollection | GeoJSON.Feature;
+  if (cl.type === 'FeatureCollection') cl.features.forEach(f => f.geometry && walk(f.geometry));
+  else if (cl.geometry) walk(cl.geometry);
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  return geom;
+};
+
+const CountryBorders: React.FC = () => {
+  const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(BORDERS_URL)
+      .then(r => r.json() as Promise<Topology>)
+      .then(topo => {
+        if (cancelled) return;
+        setGeometry(buildBorderGeometry(topo));
+      })
+      .catch(() => { /* silently skip if borders fail to load */ });
+    return () => { cancelled = true; };
+  }, []);
+  if (!geometry) return null;
+  return (
+    <lineSegments geometry={geometry}>
+      <lineBasicMaterial
+        color="#7DE7F5"
+        transparent
+        opacity={0.55}
+        toneMapped={false}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </lineSegments>
+  );
+};
 
 /* ─────────────────────────────────────────────────────────────────
    Atmosphere — fresnel glow halo around the planet
@@ -395,6 +473,7 @@ const Scene: React.FC<{
       <React.Suspense fallback={<EarthPlaceholder />}>
         <Earth />
       </React.Suspense>
+      <CountryBorders />
       <Atmosphere />
 
       {plotted.map((h, i) => (
