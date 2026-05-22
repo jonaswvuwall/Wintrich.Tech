@@ -9,6 +9,7 @@ import { Globe } from './presentation/pages/Globe';
 import { PortSkyline } from './presentation/pages/PortSkyline';
 import { LatencyHeatmap } from './presentation/pages/LatencyHeatmap';
 import { WeatherMap } from './presentation/pages/WeatherMap';
+import { RouteFlap } from './presentation/pages/RouteFlap';
 import { SharedReportPage } from './presentation/pages/SharedReportPage';
 import { Navigation } from './presentation/components/Navigation';
 import { GlobalStyles } from './presentation/styles/GlobalStyles';
@@ -29,6 +30,7 @@ function App() {
         <Route path="/visualize/tls" element={<TlsHandshake />} />
         <Route path="/visualize/heatmap" element={<LatencyHeatmap />} />
         <Route path="/visualize/weather" element={<WeatherMap />} />
+        <Route path="/visualize/flap" element={<RouteFlap />} />
         {/* Legacy redirect */}
         <Route path="/traceroute" element={<Navigate to="/visualize/traceroute" replace />} />
         <Route path="/r/:id" element={<SharedReportPage />} />

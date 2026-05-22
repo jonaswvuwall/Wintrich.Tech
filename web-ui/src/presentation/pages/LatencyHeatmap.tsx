@@ -144,24 +144,73 @@ const flash = keyframes`
   100% { transform: scale(1); }
 `;
 
+const drift1 = keyframes`
+  0%, 100% { transform: translate(0%, 0%)  scale(1);    }
+  50%      { transform: translate(6%, -4%) scale(1.08); }
+`;
+const drift2 = keyframes`
+  0%, 100% { transform: translate(0%, 0%)   scale(1);    }
+  50%      { transform: translate(-5%, 5%)  scale(1.06); }
+`;
+
 /* ─────────────────────────────────────────────────────────────────
    Page chrome
    ───────────────────────────────────────────────────────────────── */
+const Ambient = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    width: 70vmax; height: 70vmax;
+    border-radius: 50%;
+    filter: blur(90px);
+    will-change: transform;
+  }
+  &::before {
+    top: -28vmax; left: -22vmax;
+    background: radial-gradient(closest-side, rgba(34,211,238,0.42), transparent 65%);
+    animation: ${drift1} 32s ease-in-out infinite;
+  }
+  &::after {
+    bottom: -28vmax; right: -22vmax;
+    background: radial-gradient(closest-side, rgba(167,139,250,0.38), transparent 65%);
+    animation: ${drift2} 38s ease-in-out infinite;
+  }
+`;
+
+const GridOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.028) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 35%, black 0%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 35%, black 0%, transparent 90%);
+`;
+
 const Page = styled.div`
   position: fixed;
   inset: 0;
   background: ${theme.colors.background};
   overflow-y: auto;
   overflow-x: hidden;
-  padding: clamp(5.5rem, 8vh, 7rem) clamp(0.75rem, 2vw, 1.5rem) clamp(2rem, 4vh, 3rem);
+  padding: clamp(5.5rem, 8vh, 7rem) clamp(1rem, 3vw, 2.75rem) clamp(2rem, 4vh, 3rem);
 `;
 
 const TopBar = styled.header`
   position: sticky;
   top: 0;
   z-index: 50;
-  margin: 0 auto 1.25rem;
-  width: min(1080px, 100%);
+  margin: 0 0 1.5rem;
+  width: 100%;
   background: rgba(6, 7, 12, 0.78);
   border: 1px solid ${theme.colors.border};
   border-radius: 16px;
@@ -228,8 +277,9 @@ const PulseDot = styled.span`
    Grid
    ───────────────────────────────────────────────────────────────── */
 const Sheet = styled.div`
-  width: min(1080px, 100%);
-  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  width: 100%;
 `;
 
 const Section = styled.section`
@@ -237,49 +287,85 @@ const Section = styled.section`
 `;
 
 const SectionHeader = styled.div`
-  display: flex; align-items: center; gap: 0.6rem;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: ${theme.colors.textMuted};
-  padding: 0 0.25rem 0.5rem;
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.4rem 0.25rem 0.8rem;
+`;
 
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(to right, ${theme.colors.border}, transparent);
-  }
+const SectionDot = styled.span`
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  background: ${theme.gradients.brand};
+  box-shadow: 0 0 14px rgba(34,211,238,0.55);
+  flex-shrink: 0;
+`;
+
+const SectionTitle = styled.span`
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: ${theme.gradients.text};
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+`;
+
+const SectionCount = styled.span`
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.68rem;
+  color: ${theme.colors.textMuted};
+  letter-spacing: 0.04em;
+`;
+
+const SectionRule = styled.span`
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, ${theme.colors.borderStrong}, transparent);
 `;
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+  gap: 0.85rem;
 `;
 
 const Cell = styled.div<{ $tone: Tone; $active: boolean }>`
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto auto;
-  gap: 0.3rem 0.5rem;
-  padding: 0.7rem 0.8rem;
-  border-radius: 12px;
-  background: ${p => TONE_BG[p.$tone]};
+  grid-template-rows: auto auto auto auto;
+  gap: 0.35rem 0.7rem;
+  padding: 0.95rem 1.05rem 0.85rem;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 100% 0%, ${p => TONE_BORDER[p.$tone]} 0%, transparent 55%),
+    linear-gradient(180deg, ${p => TONE_BG[p.$tone]} 0%, rgba(10, 12, 18, 0.55) 100%);
   border: 1px solid ${p => TONE_BORDER[p.$tone]};
-  transition: background 600ms ease, border-color 600ms ease;
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  transition: background 600ms ease, border-color 600ms ease, transform 200ms ease, box-shadow 200ms ease;
   overflow: hidden;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+    border-color: ${p => TONE_TEXT[p.$tone]};
+  }
 
   ${p => p.$active && css`
+    transform: scale(1.015);
+    z-index: 2;
     &::before {
       content: '';
       position: absolute;
       inset: -1px;
-      border-radius: 12px;
-      border: 1px solid ${theme.colors.primary};
-      box-shadow: 0 0 18px rgba(34,211,238,0.45), inset 0 0 12px rgba(34,211,238,0.15);
+      border-radius: 14px;
+      border: 1.5px solid ${theme.colors.primary};
+      box-shadow:
+        0 0 22px rgba(34,211,238,0.55),
+        inset 0 0 18px rgba(34,211,238,0.20);
       pointer-events: none;
       animation: ${pulse} 1.4s ease-out infinite;
     }
@@ -288,23 +374,26 @@ const Cell = styled.div<{ $tone: Tone; $active: boolean }>`
 
 const HostName = styled.div`
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: ${theme.colors.text};
   line-height: 1.1;
+  letter-spacing: -0.01em;
+  align-self: end;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 `;
 
 const Latency = styled.div<{ $tone: Tone }>`
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 1.05rem;
+  font-size: 1.55rem;
   font-weight: 700;
   color: ${p => TONE_TEXT[p.$tone]};
+  text-shadow: 0 0 18px ${p => TONE_BORDER[p.$tone]};
   text-align: right;
-  line-height: 1.1;
+  line-height: 1;
   display: inline-block;
   animation: ${flash} 280ms cubic-bezier(0.22, 1, 0.36, 1);
-  small { font-size: 0.65rem; font-weight: 500; opacity: 0.75; margin-left: 2px; }
+  small { font-size: 0.65rem; font-weight: 500; opacity: 0.65; margin-left: 3px; }
 `;
 
 const Sub = styled.div`
@@ -332,15 +421,19 @@ const Foot = styled.div`
 `;
 
 const Legend = styled.div`
-  width: min(1080px, 100%);
-  margin: 0.5rem auto 0;
-  display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem;
+  width: 100%;
+  margin: 0.5rem 0 0;
+  display: flex; flex-wrap: wrap; gap: 0.5rem 0.8rem;
+  align-items: center;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: ${theme.colors.textMuted};
-  padding: 0.6rem 0.8rem;
-  border: 1px dashed ${theme.colors.border};
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid ${theme.colors.border};
   border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 `;
 
 const Swatch = styled.span<{ $tone: Tone }>`
@@ -359,7 +452,7 @@ const Swatch = styled.span<{ $tone: Tone }>`
    ───────────────────────────────────────────────────────────────── */
 const Sparkline: React.FC<{ samples: number[]; tone: Tone }> = ({ samples, tone }) => {
   const W = 200;
-  const H = 26;
+  const H = 38;
   if (samples.length < 2) {
     return (
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" width="100%" height={H}>
@@ -477,6 +570,8 @@ export const LatencyHeatmap: React.FC = () => {
 
   return (
     <Page>
+      <Ambient />
+      <GridOverlay />
       <TopBar>
         <VisualizeTabs />
         <ControlBtn $primary={paused} onClick={() => setPaused(p => !p)}>
@@ -499,7 +594,12 @@ export const LatencyHeatmap: React.FC = () => {
       <Sheet ref={sheetRef}>
         {CATEGORIES.map(cat => (
           <Section key={cat}>
-            <SectionHeader>{cat}</SectionHeader>
+            <SectionHeader>
+              <SectionDot />
+              <SectionTitle>{cat}</SectionTitle>
+              <SectionCount>{grouped[cat].length} hosts</SectionCount>
+              <SectionRule />
+            </SectionHeader>
             <Grid>
               {grouped[cat].map(h => {
                 const c = cells[h.host] ?? EMPTY_CELL;

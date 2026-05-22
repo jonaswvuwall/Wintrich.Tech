@@ -62,7 +62,7 @@ const TopBar = styled.header`
   position: relative;
   z-index: 2;
   margin: 0 auto 1.4rem;
-  width: min(900px, 100%);
+  width: min(1200px, 100%);
   background: rgba(6, 7, 12, 0.78);
   border: 1px solid ${theme.colors.border};
   border-radius: 16px;
@@ -110,7 +110,7 @@ const Content = styled.div`
   position: relative;
   z-index: 1;
   margin: 0 auto;
-  width: min(900px, 100%);
+  width: min(1200px, 100%);
   display: grid;
   gap: 1rem;
 `;

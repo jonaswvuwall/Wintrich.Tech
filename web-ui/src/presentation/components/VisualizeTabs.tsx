@@ -75,6 +75,9 @@ const HeatIco = () => (
 const WeatherIco = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="8" cy="10" r="3"/><path d="M14 17h4a3 3 0 000-6 5 5 0 00-9.8-1"/><path d="M7 19l-1 2M11 19l-1 2M15 19l-1 2"/></svg>
 );
+const FlapIco = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 16c3-5 6 2 9-3s6 4 9-1"/><path d="M3 8c3 5 6-2 9 3s6-4 9 1" opacity="0.55"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+);
 
 export const VisualizeTabs: React.FC = () => (
   <Wrap aria-label="Visualization picker">
@@ -85,5 +88,6 @@ export const VisualizeTabs: React.FC = () => (
     <Tab to="/visualize/tls"><TlsIco /><span className="lbl">TLS</span></Tab>
     <Tab to="/visualize/heatmap"><HeatIco /><span className="lbl">Heatmap</span></Tab>
     <Tab to="/visualize/weather"><WeatherIco /><span className="lbl">Weather</span></Tab>
+    <Tab to="/visualize/flap"><FlapIco /><span className="lbl">Flap</span></Tab>
   </Wrap>
 );

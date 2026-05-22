@@ -81,7 +81,7 @@ const TopBar = styled.header`
   right: 0;
   margin: 0 auto;
   z-index: 1000;
-  width: min(900px, calc(100% - 1rem));
+  width: min(1200px, calc(100% - 1rem));
   background: rgba(6, 7, 12, 0.78);
   border: 1px solid ${theme.colors.border};
   border-radius: 16px;
@@ -130,7 +130,7 @@ const StatsBar = styled.div`
   left: 0; right: 0; margin: 0 auto;
   z-index: 999;
   display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;
-  width: min(900px, calc(100% - 1rem));
+  width: min(1200px, calc(100% - 1rem));
   pointer-events: none;
   animation: ${fadeIn} 0.4s ease-out 0.05s both;
   @media (max-width: 560px) {

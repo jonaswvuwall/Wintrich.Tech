@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { keyframes, css } from 'styled-components';
-import { MapContainer, TileLayer, Marker, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip, useMap, Circle } from 'react-leaflet';
 import L, { type Map as LeafletMap } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { networkApi } from '../../infrastructure/api/networkApi';
@@ -109,6 +109,28 @@ const TIER_SEVERITY: Record<Tier, number> = {
   sunny: 0, mostly: 1, partly: 2, cloudy: 3, rain: 4, storm: 5, fog: 6,
 };
 
+/* Weather-zone bubble around each station — radius in meters, fill opacity.
+   Overlapping bubbles blend into "weather fronts" on the map. */
+const ZONE_RADIUS: Record<Tier, number> = {
+  sunny:    650_000,
+  mostly:   780_000,
+  partly:   950_000,
+  cloudy: 1_150_000,
+  rain:   1_350_000,
+  storm:  1_600_000,
+  fog:      450_000,
+};
+
+const ZONE_FILL_OPACITY: Record<Tier, number> = {
+  sunny:  0.14,
+  mostly: 0.17,
+  partly: 0.22,
+  cloudy: 0.27,
+  rain:   0.34,
+  storm:  0.42,
+  fog:    0.07,
+};
+
 const tierOf = (s: StationState): Tier => {
   const total = s.ok + s.fail;
   if (total === 0) return 'fog';
@@ -192,7 +214,7 @@ const TopBar = styled.header`
   top: clamp(5.5rem, 8vh, 7rem);
   left: 0; right: 0; margin: 0 auto;
   z-index: 1000;
-  width: min(960px, calc(100% - 1rem));
+  width: min(1200px, calc(100% - 1rem));
   background: rgba(6, 7, 12, 0.78);
   border: 1px solid ${theme.colors.border};
   border-radius: 16px;
@@ -259,7 +281,7 @@ const StatsBar = styled.div`
   left: 0; right: 0; margin: 0 auto;
   z-index: 999;
   display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;
-  width: min(960px, calc(100% - 1rem));
+  width: min(1200px, calc(100% - 1rem));
   pointer-events: none;
   animation: ${fadeIn} 0.4s ease-out 0.1s both;
 `;
@@ -434,7 +456,17 @@ const ensureStyle = () => {
       0%   { transform: translate(-50%, -50%) scale(0.6); opacity: 0.85; }
       100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0;    }
     }
+    @keyframes wt-storm-dash {
+      to { stroke-dashoffset: -28; }
+    }
+    @keyframes wt-zone-breathe {
+      0%, 100% { opacity: 1;    }
+      50%      { opacity: 0.78; }
+    }
     .wt-weather-icon { background: transparent !important; border: none !important; }
+    .wt-weather-zone { transition: fill 600ms ease, fill-opacity 600ms ease; }
+    .wt-rain-zone, .wt-storm-zone { animation: wt-zone-breathe 3.2s ease-in-out infinite; }
+    .wt-storm-ring { stroke-dasharray: 6 6; animation: wt-storm-dash 1.8s linear infinite; }
   `;
   document.head.appendChild(s);
 };
@@ -609,6 +641,44 @@ export const WeatherMap: React.FC = () => {
             crossOrigin=""
           />
           <FitOnce />
+
+          {/* Translucent tier-colored bubbles around each station — overlapping
+              bubbles blend into "weather fronts".  Sits below the markers. */}
+          {tiered.map(({ station, tier }) => (
+            <Circle
+              key={`zone-${station.host}`}
+              center={[station.lat, station.lon]}
+              radius={ZONE_RADIUS[tier]}
+              pathOptions={{
+                color: TIER_COLOR[tier],
+                weight: 0,
+                opacity: 0,
+                fillColor: TIER_COLOR[tier],
+                fillOpacity: ZONE_FILL_OPACITY[tier],
+                className: `wt-${tier}-zone wt-weather-zone`,
+              }}
+              interactive={false}
+            />
+          ))}
+
+          {/* Animated dashed rings on severe-weather stations */}
+          {tiered
+            .filter(t => t.tier === 'rain' || t.tier === 'storm')
+            .map(({ station, tier }) => (
+              <Circle
+                key={`ring-${station.host}`}
+                center={[station.lat, station.lon]}
+                radius={ZONE_RADIUS[tier] * 0.62}
+                pathOptions={{
+                  color: TIER_COLOR[tier],
+                  weight: 1.5,
+                  opacity: 0.85,
+                  fill: false,
+                  className: 'wt-storm-ring',
+                }}
+                interactive={false}
+              />
+            ))}
 
           {tiered.map(({ station, state, tier }, i) => (
             <Marker
