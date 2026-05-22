@@ -7,6 +7,8 @@ import { AnycastAtlas } from './presentation/pages/AnycastAtlas';
 import { TlsHandshake } from './presentation/pages/TlsHandshake';
 import { Globe } from './presentation/pages/Globe';
 import { PortSkyline } from './presentation/pages/PortSkyline';
+import { LatencyHeatmap } from './presentation/pages/LatencyHeatmap';
+import { WeatherMap } from './presentation/pages/WeatherMap';
 import { SharedReportPage } from './presentation/pages/SharedReportPage';
 import { Navigation } from './presentation/components/Navigation';
 import { GlobalStyles } from './presentation/styles/GlobalStyles';
@@ -25,6 +27,8 @@ function App() {
         <Route path="/visualize/traceroute" element={<Traceroute />} />
         <Route path="/visualize/anycast" element={<AnycastAtlas />} />
         <Route path="/visualize/tls" element={<TlsHandshake />} />
+        <Route path="/visualize/heatmap" element={<LatencyHeatmap />} />
+        <Route path="/visualize/weather" element={<WeatherMap />} />
         {/* Legacy redirect */}
         <Route path="/traceroute" element={<Navigate to="/visualize/traceroute" replace />} />
         <Route path="/r/:id" element={<SharedReportPage />} />

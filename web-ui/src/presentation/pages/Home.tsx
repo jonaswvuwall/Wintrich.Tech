@@ -465,7 +465,7 @@ export const Home: React.FC = () => {
         <div>
           <Eyebrow>Network Diagnostics</Eyebrow>
           <Headline>
-            Know your <span className="grad">network.</span><br />
+            Know the <span className="grad">entire Internet.</span><br />
             <span className="muted">In seconds.</span>
           </Headline>
           <Lede>
@@ -481,7 +481,7 @@ export const Home: React.FC = () => {
 
           <StatsRow>
             <Stat><strong>8</strong><span>Diagnostic tools</span></Stat>
-            <Stat><strong>5</strong><span>Visualizations</span></Stat>
+            <Stat><strong>7</strong><span>Visualizations</span></Stat>
             <Stat><strong>100%</strong><span>Free to use</span></Stat>
           </StatsRow>
         </div>

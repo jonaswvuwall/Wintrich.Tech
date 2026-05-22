@@ -69,6 +69,12 @@ const GlobeIco = () => (
 const SkylineIco = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 21h18M5 21V11l3-2v12M11 21V7l3 2v12M17 21V13l3 2v6"/></svg>
 );
+const HeatIco = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="10" y="3" width="6" height="6" rx="1"/><rect x="17" y="3" width="4" height="6" rx="1"/><rect x="3" y="10" width="6" height="6" rx="1"/><rect x="10" y="10" width="6" height="6" rx="1"/><rect x="17" y="10" width="4" height="6" rx="1"/></svg>
+);
+const WeatherIco = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="8" cy="10" r="3"/><path d="M14 17h4a3 3 0 000-6 5 5 0 00-9.8-1"/><path d="M7 19l-1 2M11 19l-1 2M15 19l-1 2"/></svg>
+);
 
 export const VisualizeTabs: React.FC = () => (
   <Wrap aria-label="Visualization picker">
@@ -77,5 +83,7 @@ export const VisualizeTabs: React.FC = () => (
     <Tab to="/visualize/traceroute" end><TraceIco /><span className="lbl">Trace</span></Tab>
     <Tab to="/visualize/anycast"><AtlasIco /><span className="lbl">Anycast</span></Tab>
     <Tab to="/visualize/tls"><TlsIco /><span className="lbl">TLS</span></Tab>
+    <Tab to="/visualize/heatmap"><HeatIco /><span className="lbl">Heatmap</span></Tab>
+    <Tab to="/visualize/weather"><WeatherIco /><span className="lbl">Weather</span></Tab>
   </Wrap>
 );
