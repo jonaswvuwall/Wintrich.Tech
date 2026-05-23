@@ -7,6 +7,7 @@ import { networkApi } from '../../infrastructure/api/networkApi';
 import { theme } from '../styles/theme';
 import { VisualizeTabs } from '../components/VisualizeTabs';
 import { DownloadButton } from '../components/DownloadButton';
+import { InfoButton } from '../components/InfoButton';
 
 /* ─────────────────────────────────────────────────────────────────
    Submarine Cables — schematic map of major intercontinental
@@ -1033,6 +1034,28 @@ export const SubmarineCables: React.FC = () => {
             {activeEndpoint ? `c${cycle + 1} · ${summary.total}` : 'press resume'}
           </span>
         </Probing>
+        <InfoButton title="Submarine cables">
+          <p>
+            Every <b>5 s</b> the page picks the next of <b>22 landing-city endpoints</b> and
+            calls <code>GET /api/network/ping?host=…</code>. The backend runs a
+            server-side ICMP probe and returns latency + reachability.
+          </p>
+          <p>
+            Each cable carries the <b>worse tier</b> of its two landing endpoints. The tier
+            (<i>fast / good / mid / slow / lossy / dead</i>) drives the cable's colour and
+            the speed of its ambient dashed flow.
+          </p>
+          <p>
+            On every successful probe, a bright <b>packet comet</b> is spawned on each
+            cable touching that landing, travelling from the far end to the just-probed
+            end — duration scaled to the measured latency.
+          </p>
+          <p>
+            Cable routes are <b>hand-drawn schematic paths</b> with a handful of waypoints
+            each — they follow the real great-circle approximations but aren't tied to
+            any live cable database.
+          </p>
+        </InfoButton>
         <DownloadButton
           getTarget={() => mapWrapRef.current?.querySelector<HTMLElement>('.leaflet-container') ?? null}
           filename="submarine-cables"

@@ -8,6 +8,7 @@ import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
 import { DownloadButton } from '../components/DownloadButton';
+import { InfoButton } from '../components/InfoButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -735,6 +736,22 @@ export const PortSkyline: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Scan'}
         </RunBtn>
+        <InfoButton title="Port skyline">
+          <p>
+            Type a host and Scan — the page calls <code>GET /api/network/port-scan?host=…</code>.
+            The backend performs a <b>TCP connect probe</b> against a curated list of
+            well-known + registered ports and reports which ones accepted the connection.
+          </p>
+          <p>
+            Each port becomes a <b>3D tower</b>. Height is fixed; <b>colour</b> encodes the
+            detected service family (HTTP red/orange, mail blue, database purple, etc.).
+            Closed ports render as dim stumps; open ports glow and stand tall.
+          </p>
+          <p>
+            For open ports the backend also tries to grab a <b>banner</b> from the first
+            response bytes — shown in the side panel when present.
+          </p>
+        </InfoButton>
         <DownloadButton
           getTarget={() => canvasWrapRef.current?.querySelector('canvas') ?? null}
           filename={`port-skyline-${result?.host ?? 'view'}`}

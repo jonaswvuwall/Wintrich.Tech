@@ -7,6 +7,7 @@ import { networkApi } from '../../infrastructure/api/networkApi';
 import { theme } from '../styles/theme';
 import { VisualizeTabs } from '../components/VisualizeTabs';
 import { DownloadButton } from '../components/DownloadButton';
+import { InfoButton } from '../components/InfoButton';
 
 /* ─────────────────────────────────────────────────────────────────
    Stations — geo-tagged hosts.  We rotate through them, ping each,
@@ -749,6 +750,22 @@ export const WeatherMap: React.FC = () => {
             {activeHost ? `c${cycle + 1} · ${summary.total}` : 'press resume'}
           </span>
         </Probing>
+        <InfoButton title="Network weather">
+          <p>
+            Every <b>800 ms</b> the page pings the next of <b>22 geo-tagged stations</b>
+            via <code>GET /api/network/ping?host=…</code>. The backend runs an
+            ICMP probe and returns latency + reachability.
+          </p>
+          <p>
+            From the rolling per-station window we compute <b>median latency</b>,
+            <b> jitter</b>, and <b>loss %</b>, then bucket each station into a weather tier
+            (sunny → storm → fog when unreachable).
+          </p>
+          <p>
+            The translucent disc around each marker is a <b>weather zone</b> whose radius
+            and opacity grow with severity; overlapping zones blend into "weather fronts."
+          </p>
+        </InfoButton>
         <DownloadButton
           getTarget={() => mapWrapRef.current?.querySelector<HTMLElement>('.leaflet-container') ?? null}
           filename="network-weather"

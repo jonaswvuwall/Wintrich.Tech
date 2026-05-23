@@ -14,6 +14,7 @@ import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
 import { DownloadButton } from '../components/DownloadButton';
+import { InfoButton } from '../components/InfoButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -700,6 +701,23 @@ export const Globe: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Launch'}
         </RunBtn>
+        <InfoButton title="3D globe traceroute">
+          <p>
+            Type a host and Launch — the page calls <code>GET /api/network/traceroute?host=…</code>,
+            which shells out to the OS <code>traceroute</code> binary on the server and
+            returns every router hop along the path.
+          </p>
+          <p>
+            Each hop is enriched server-side with <b>ASN ownership</b> and
+            <b> geo-coordinates</b> (city, lat/lon) so we can place it on the globe.
+            Hops without geo (private IPs, MPLS jumps) are skipped from the arc.
+          </p>
+          <p>
+            Hops are joined by <b>great-circle arcs</b> lifted above the surface (long
+            hops arc higher). Arc colour comes from the hop's ASN owner —
+            Cloudflare orange, Google red, AWS yellow, and so on.
+          </p>
+        </InfoButton>
         <DownloadButton
           getTarget={() => canvasWrapRef.current?.querySelector('canvas') ?? null}
           filename={`globe-${result?.host ?? 'view'}`}

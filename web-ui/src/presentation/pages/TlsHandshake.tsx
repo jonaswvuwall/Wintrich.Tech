@@ -9,6 +9,7 @@ import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
 import { DownloadButton } from '../components/DownloadButton';
+import { InfoButton } from '../components/InfoButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -395,6 +396,23 @@ export const TlsHandshake: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Connect'}
         </RunBtn>
+        <InfoButton title="TLS handshake">
+          <p>
+            Type a host and Connect — the page calls <code>GET /api/network/tls-handshake?host=…</code>.
+            The backend opens a fresh TCP socket on port 443 and performs a full TLS
+            handshake, <b>instrumenting each phase</b> with a millisecond timestamp.
+          </p>
+          <p>
+            The returned phases (DNS resolve → TCP connect → ClientHello → ServerHello
+            → Certificate → Key exchange → Finished) become a <b>waterfall timeline</b>,
+            so you can see exactly which step ate the round-trips.
+          </p>
+          <p>
+            The negotiated <b>protocol version</b>, <b>cipher suite</b>, and
+            <b> certificate metadata</b> (issuer, expiry, SANs) are shown in the side
+            panels — everything from one real TLS connection.
+          </p>
+        </InfoButton>
         <DownloadButton
           getTarget={() => contentRef.current}
           filename={`tls-handshake-${result?.host ?? 'view'}`}

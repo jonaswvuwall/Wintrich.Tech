@@ -13,6 +13,7 @@ import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
 import { DownloadButton } from '../components/DownloadButton';
+import { InfoButton } from '../components/InfoButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -587,6 +588,22 @@ export const AnycastAtlas: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Resolve'}
         </RunBtn>
+        <InfoButton title="Anycast atlas">
+          <p>
+            Type a host and Resolve — the page calls <code>GET /api/network/anycast-atlas?host=…</code>.
+            The backend queries the host's <b>A record from a constellation of public
+            DNS resolvers</b> located in different cities, in parallel.
+          </p>
+          <p>
+            Each resolver returns the IP it considers closest to <i>itself</i>. For an
+            anycast CDN that's a different IP per region — the map draws lines from each
+            resolver to its returned IP and groups them into <b>unique endpoints</b>.
+          </p>
+          <p>
+            Endpoint IPs are enriched with <b>ASN + geo-coordinates</b> server-side, then
+            plotted as anycast points-of-presence on the world map.
+          </p>
+        </InfoButton>
         <DownloadButton
           getTarget={() => mapWrapRef.current?.querySelector<HTMLElement>('.leaflet-container') ?? null}
           filename={`anycast-atlas-${result?.host ?? 'map'}`}

@@ -8,6 +8,7 @@ import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
 import { DownloadButton } from '../components/DownloadButton';
+import { InfoButton } from '../components/InfoButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -647,6 +648,23 @@ export const Traceroute: React.FC = () => {
         <RunBtn onClick={() => run(target)} disabled={loading || !target.trim()}>
           {loading ? <LoadingSpinner /> : 'Trace path'}
         </RunBtn>
+        <InfoButton title="Traceroute path">
+          <p>
+            Type a host and Trace path — the page calls <code>GET /api/network/traceroute?host=…</code>,
+            which shells out to the OS <code>traceroute</code> binary on the server.
+            Every router hop reports its IP and RTT.
+          </p>
+          <p>
+            Each hop is enriched with <b>ASN ownership</b> and <b>geo-coordinates</b>
+            (MaxMind GeoIP). Hops with coordinates are placed on the world map and joined
+            by polylines in hop order. Private / un-geolocated hops are shown in the side
+            list only.
+          </p>
+          <p>
+            Marker colour bands the per-hop latency; the path's bright halo reveals the
+            slowest leg.
+          </p>
+        </InfoButton>
         <DownloadButton
           getTarget={() => mapWrapRef.current?.querySelector<HTMLElement>('.leaflet-container') ?? null}
           filename={`traceroute-${result?.host ?? 'map'}`}

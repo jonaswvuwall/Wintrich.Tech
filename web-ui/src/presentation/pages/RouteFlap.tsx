@@ -12,6 +12,7 @@ import { theme } from '../styles/theme';
 import { Button, Input, LoadingSpinner } from '../components/StyledComponents';
 import { VisualizeTabs } from '../components/VisualizeTabs';
 import { DownloadButton } from '../components/DownloadButton';
+import { InfoButton } from '../components/InfoButton';
 
 const MAX_RUNS = 20;
 const VOLATILITY_WINDOW = 3;
@@ -696,6 +697,23 @@ export const RouteFlap: React.FC = () => {
         <SecondaryBtn onClick={clearRuns} disabled={runs.length === 0 || running}>
           Clear
         </SecondaryBtn>
+        <InfoButton title="Route flap">
+          <p>
+            Type a host, pick an interval and Start — the page calls
+            <code> GET /api/network/traceroute?host=…</code> on a recurring timer.
+            Each run shells out to the OS <code>traceroute</code> binary on the server
+            and returns the full hop list.
+          </p>
+          <p>
+            Each new run is <b>diffed against the previous one</b>: hops that appear,
+            disappear, or change ASN are flagged as flaps. Stable paths fade to grey;
+            flapping segments stay highlighted.
+          </p>
+          <p>
+            The map plots the union of all observed hops; the side panel lists each run
+            with its hop count and flap delta against the previous run.
+          </p>
+        </InfoButton>
         <DownloadButton
           getTarget={() => mapWrapRef.current?.querySelector<HTMLElement>('.leaflet-container') ?? null}
           filename={`route-flap-${target || 'map'}`}

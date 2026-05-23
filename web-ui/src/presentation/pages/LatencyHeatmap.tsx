@@ -4,6 +4,7 @@ import { networkApi } from '../../infrastructure/api/networkApi';
 import { theme } from '../styles/theme';
 import { VisualizeTabs } from '../components/VisualizeTabs';
 import { DownloadButton } from '../components/DownloadButton';
+import { InfoButton } from '../components/InfoButton';
 import { ScrollToTop } from '../components/ScrollToTop';
 
 /* ─────────────────────────────────────────────────────────────────
@@ -609,6 +610,22 @@ export const LatencyHeatmap: React.FC = () => {
             {activeHost ? `c${cycleCount + 1} · ${probedTotal}` : 'press resume'}
           </span>
         </Probing>
+        <InfoButton title="Latency heatmap">
+          <p>
+            Every <b>800 ms</b> the page pings the next of <b>32 hosts</b>
+            via <code>GET /api/network/ping?host=…</code>. The backend runs an
+            ICMP probe and returns latency + reachability — full cycle ≈ 26 s.
+          </p>
+          <p>
+            Each cell's <b>tone</b> bands the latest latency (<i>fresh &lt;20 ms</i>,
+            <i> good &lt;50</i>, <i>ok &lt;100</i>, <i>warn &lt;200</i>, <i>slow &lt;400</i>,
+            <i> bad ≥400</i>, <i>down</i> when unreachable).
+          </p>
+          <p>
+            The sparkline plots the last <b>24 samples</b> for that host; the foot of each
+            cell shows OK/total counts plus jitter or loss %.
+          </p>
+        </InfoButton>
         <DownloadButton
           getTarget={() => sheetRef.current}
           filename="latency-heatmap"
