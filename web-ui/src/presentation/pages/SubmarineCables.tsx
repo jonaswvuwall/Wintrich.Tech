@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip, useMap } from 'react-leaflet';
-import { type Map as LeafletMap } from 'leaflet';
+import { type Map as LeafletMap, type CircleMarker as LeafletCircleMarker } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { networkApi } from '../../infrastructure/api/networkApi';
 import { theme } from '../styles/theme';
@@ -110,7 +110,7 @@ const CABLES: Cable[] = [
     path: [[35.13, -219.64], [40, -210], [45, -180], [50, -150], [49.23, -124.83]] },
 ];
 
-const TICK_MS = 800;
+const TICK_MS = 1500;
 const HISTORY = 16;
 
 /* ─────────────────────────────────────────────────────────────────
@@ -183,6 +183,103 @@ const expandPath = (path: [number, number][]): [number, number][][] => {
     return [path, path.map(([la, lo]) => [la, lo + 360])];
   }
   return [path];
+};
+
+/* ─────────────────────────────────────────────────────────────────
+   Packet comets — discrete bright dots fired on each successful
+   probe, riding their cables from the far landing to the just-
+   probed landing.  Layered on top of the ambient stroke flow.
+   ───────────────────────────────────────────────────────────────── */
+interface Comet {
+  id: string;
+  positions: [number, number][];
+  startedAt: number;
+  duration: number;
+  color: string;
+  reverse: boolean;
+}
+
+/* Tier for *this* probe sample only — colours the comet without
+   dragging the rolling state of the endpoint into the picture. */
+const instantTier = (latencyMs: number | null): Tier => {
+  if (latencyMs == null) return 'unknown';
+  if (latencyMs > 400) return 'slow';
+  if (latencyMs > 200) return 'mid';
+  if (latencyMs > 80)  return 'good';
+  return 'fast';
+};
+
+/* Piecewise-linear interpolation along a polyline path, t ∈ [0,1].
+   Euclidean lengths on lat/lon are good enough for our schematic
+   cables — they don't need true great-circle parameterisation. */
+function interpolatePath(path: [number, number][], t: number): [number, number] {
+  if (path.length < 2) return path[0];
+  const segs: number[] = [];
+  let total = 0;
+  for (let i = 1; i < path.length; i++) {
+    const d = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
+    segs.push(d);
+    total += d;
+  }
+  if (total === 0) return path[0];
+  const target = t * total;
+  let acc = 0;
+  for (let i = 0; i < segs.length; i++) {
+    if (acc + segs[i] >= target) {
+      const s = segs[i] === 0 ? 0 : (target - acc) / segs[i];
+      const a = path[i], b = path[i + 1];
+      return [a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s];
+    }
+    acc += segs[i];
+  }
+  return path[path.length - 1];
+}
+
+/* One comet = one CircleMarker that updates its position via rAF
+   and tears itself down when its lifetime expires.  Position
+   updates go through the Leaflet instance directly to avoid React
+   re-renders at 60 fps. */
+const CometMarker: React.FC<{ comet: Comet }> = ({ comet }) => {
+  const ref = useRef<LeafletCircleMarker | null>(null);
+  useEffect(() => {
+    let frame = 0;
+    const step = () => {
+      const t = Math.min(1, (performance.now() - comet.startedAt) / comet.duration);
+      const u = comet.reverse ? 1 - t : t;
+      const pos = interpolatePath(comet.positions, u);
+      const m = ref.current;
+      if (m) {
+        m.setLatLng([pos[0], pos[1]]);
+        // Ramp opacity in/out so the comet doesn't snap on or off.
+        const fade = t < 0.1 ? t * 10 : t > 0.9 ? (1 - t) * 10 : 1;
+        m.setStyle({ opacity: fade, fillOpacity: fade });
+      }
+      if (t < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [comet]);
+
+  const start = comet.reverse
+    ? comet.positions[comet.positions.length - 1]
+    : comet.positions[0];
+
+  return (
+    <CircleMarker
+      ref={ref}
+      center={[start[0], start[1]]}
+      radius={4.5}
+      pathOptions={{
+        color: '#FFFFFF',
+        weight: 1.2,
+        opacity: 1,
+        fillColor: comet.color,
+        fillOpacity: 1,
+        className: 'wt-comet',
+      }}
+      interactive={false}
+    />
+  );
 };
 
 /* ─────────────────────────────────────────────────────────────────
@@ -263,6 +360,15 @@ const ensureStyle = () => {
     /* The endpoint currently being probed gets a tight cyan pulse */
     .wt-landing-active {
       animation: wt-active-ring 1.4s ease-in-out infinite;
+    }
+
+    /* Packet comets — bright dot with a soft white glow so they
+       pop against the ambient cable flow regardless of tier hue. */
+    .wt-comet {
+      pointer-events: none;
+      filter:
+        drop-shadow(0 0 4px rgba(255, 255, 255, 0.65))
+        drop-shadow(0 0 10px rgba(255, 255, 255, 0.35));
     }
 
     .leaflet-tooltip.cable-tip {
@@ -364,15 +470,37 @@ const ControlBtn = styled.button<{ $primary?: boolean }>`
       `}
 `;
 
+/* Compact, packed readout — the host slot has a fixed width so
+   the bar can't jitter on hostname length changes, and the block
+   stays small enough to never wrap to a second row. */
 const Probing = styled.div`
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 0.75rem;
   color: ${theme.colors.textSecondary};
   margin-left: auto;
-  display: flex; align-items: center; gap: 0.5rem;
-  b { color: ${theme.colors.primary}; font-weight: 700; }
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+
+  .host {
+    color: ${theme.colors.primary};
+    font-weight: 700;
+    width: 14ch;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stats {
+    color: ${theme.colors.textMuted};
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .idle { color: ${theme.colors.textMuted}; width: 14ch; }
+
   @media (max-width: 560px) {
     width: 100%; order: 10; margin-left: 0;
+    justify-content: flex-start;
   }
 `;
 
@@ -561,7 +689,18 @@ const LegendItem = styled.span<{ $tier: Tier }>`
 const FitWorld: React.FC = () => {
   const map = useMap();
   useEffect(() => {
-    map.setView([15, -30], 2);
+    // Atlantic-biased framing at zoom 3 — high enough that the world
+    // tiles fill a desktop viewport without black bars, low enough
+    // that most Atlantic cables fit on screen at first paint.
+    map.setView([20, -40], 3);
+    // Leaflet sometimes mounts before its container has settled into
+    // its final size, which is why the map looks "weirdly scaled"
+    // until the first user interaction.  Re-measure on the next two
+    // frames to be sure (covers font-loading / scrollbar reflows).
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+      requestAnimationFrame(() => map.invalidateSize());
+    });
   }, [map]);
   return null;
 };
@@ -579,9 +718,50 @@ export const SubmarineCables: React.FC = () => {
   const [paused, setPaused] = useState(false);
   const [cycle, setCycle] = useState(0);
   const [hoverCable, setHoverCable] = useState<string | null>(null);
+  const [comets, setComets] = useState<Comet[]>([]);
   const [panelOpen, setPanelOpen] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth > 720 : true
   );
+
+  /* Spawn one comet per cable touching the just-probed endpoint
+     (one extra copy for Pacific cables, since their paths render
+     in both worlds).  Comet *arrives* at the probed endpoint. */
+  const spawnComets = (endpointId: string, latencyMs: number) => {
+    const tier = instantTier(latencyMs);
+    const duration = Math.max(2200, Math.min(8000, 1800 + latencyMs * 4));
+    const color = TIER_COLOR[tier];
+    const now = performance.now();
+    const next: Comet[] = [];
+    for (const cable of CABLES) {
+      if (!cable.endpoints.includes(endpointId)) continue;
+      const reverse = cable.endpoints[0] === endpointId;
+      expandPath(cable.path).forEach((segs, copyIdx) => {
+        next.push({
+          id: `${cable.id}-${copyIdx}-${now}-${Math.random().toString(36).slice(2, 7)}`,
+          positions: segs,
+          startedAt: now,
+          duration,
+          color,
+          reverse,
+        });
+      });
+    }
+    if (next.length === 0) return;
+    setComets(prev => {
+      const combined = [...prev, ...next];
+      // Hard cap so long sessions can't leak.
+      return combined.length > 80 ? combined.slice(combined.length - 80) : combined;
+    });
+  };
+
+  /* Reap finished comets so the list (and the React tree) stays small. */
+  useEffect(() => {
+    const id = setInterval(() => {
+      const now = performance.now();
+      setComets(prev => prev.filter(c => now - c.startedAt < c.duration + 200));
+    }, 500);
+    return () => clearInterval(id);
+  }, []);
 
   const idxRef = useRef(0);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -616,6 +796,10 @@ export const SubmarineCables: React.FC = () => {
               },
             };
           });
+          // Visible "packet just arrived" — only on reachable probes.
+          if (res.reachable && res.latencyMs != null) {
+            spawnComets(e.id, res.latencyMs);
+          }
         })
         .catch(() => {
           setCells(prev => {
@@ -693,7 +877,7 @@ export const SubmarineCables: React.FC = () => {
     <Page>
       <MapWrap ref={mapWrapRef}>
         <MapContainer
-          center={[15, -30]} zoom={2} minZoom={2} maxZoom={6} worldCopyJump
+          center={[20, -40]} zoom={3} minZoom={2} maxZoom={6} worldCopyJump
           ref={(m) => { mapRef.current = m as LeafletMap; }}
           attributionControl zoomControl
         >
@@ -825,6 +1009,11 @@ export const SubmarineCables: React.FC = () => {
               </React.Fragment>
             );
           })}
+
+          {/* ── Packet comets ── one bright dot per cable touching
+              the just-probed endpoint, riding the cable from the
+              far landing to the probed landing. */}
+          {comets.map(c => <CometMarker key={c.id} comet={c} />)}
         </MapContainer>
       </MapWrap>
 
@@ -835,9 +1024,14 @@ export const SubmarineCables: React.FC = () => {
         </ControlBtn>
         <Probing>
           {!paused && <PulseDot />}
-          {activeEndpoint
-            ? <>probing <b>{activeEndpoint.host}</b> · cycle {cycle + 1} · {summary.total} probes</>
-            : <>idle</>}
+          {activeEndpoint ? (
+            <span className="host" title={activeEndpoint.host}>{activeEndpoint.host}</span>
+          ) : (
+            <span className="idle">idle</span>
+          )}
+          <span className="stats">
+            {activeEndpoint ? `c${cycle + 1} · ${summary.total}` : 'press resume'}
+          </span>
         </Probing>
         <DownloadButton
           getTarget={() => mapWrapRef.current?.querySelector<HTMLElement>('.leaflet-container') ?? null}

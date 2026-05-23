@@ -257,15 +257,37 @@ const ControlBtn = styled.button<{ $primary?: boolean }>`
       `}
 `;
 
+/* Compact, packed readout — the host slot has a fixed width so
+   the bar can't jitter on hostname length changes, and the block
+   stays small enough to never wrap to a second row. */
 const Probing = styled.div`
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 0.75rem;
   color: ${theme.colors.textSecondary};
   margin-left: auto;
-  display: flex; align-items: center; gap: 0.5rem;
-  b { color: ${theme.colors.primary}; font-weight: 700; }
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+
+  .host {
+    color: ${theme.colors.primary};
+    font-weight: 700;
+    width: 14ch;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stats {
+    color: ${theme.colors.textMuted};
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .idle { color: ${theme.colors.textMuted}; width: 14ch; }
+
   @media (max-width: 560px) {
     width: 100%; order: 10; margin-left: 0;
+    justify-content: flex-start;
   }
 `;
 
@@ -517,6 +539,12 @@ const FitOnce: React.FC = () => {
   const map = useMap();
   useEffect(() => {
     map.fitWorld({ padding: [40, 40] });
+    // Re-measure after mount so the tile pyramid is computed against
+    // the container's *final* size, not its initial pre-layout size.
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+      requestAnimationFrame(() => map.invalidateSize());
+    });
   }, [map]);
   return null;
 };
@@ -712,9 +740,14 @@ export const WeatherMap: React.FC = () => {
         </ControlBtn>
         <Probing>
           {!paused && <PulseDot />}
-          {activeHost
-            ? <>probing <b>{activeHost.host}</b> · cycle {cycle + 1} · {summary.total} probes</>
-            : <>idle</>}
+          {activeHost ? (
+            <span className="host" title={activeHost.host}>{activeHost.host}</span>
+          ) : (
+            <span className="idle">idle</span>
+          )}
+          <span className="stats">
+            {activeHost ? `c${cycle + 1} · ${summary.total}` : 'press resume'}
+          </span>
         </Probing>
         <DownloadButton
           getTarget={() => mapWrapRef.current?.querySelector<HTMLElement>('.leaflet-container') ?? null}
