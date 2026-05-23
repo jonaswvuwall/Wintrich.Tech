@@ -32,6 +32,9 @@ const WeatherIco = () => (
 const FlapIco = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 16c3-5 6 2 9-3s6 4 9-1"/><path d="M3 8c3 5 6-2 9 3s6-4 9 1" opacity="0.55"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
 );
+const CableIco = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9 Q 8 13, 12 9 T 21 9"/><path d="M3 17 Q 8 21, 12 17 T 21 17" opacity="0.55"/><circle cx="4" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="20" cy="17" r="1.5" fill="currentColor" stroke="none"/></svg>
+);
 
 /* ─────────────────────────────────────────────────────────────────
    Single source of truth for tab order/labels
@@ -52,6 +55,7 @@ const TABS: TabDef[] = [
   { to: '/visualize/heatmap',    label: 'Heatmap', Icon: HeatIco },
   { to: '/visualize/weather',    label: 'Weather', Icon: WeatherIco },
   { to: '/visualize/flap',       label: 'Flap',    Icon: FlapIco },
+  { to: '/visualize/cables',     label: 'Cables',  Icon: CableIco },
 ];
 
 /* ─────────────────────────────────────────────────────────────────
